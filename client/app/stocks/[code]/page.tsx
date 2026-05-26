@@ -8,14 +8,14 @@ export const preferredRegion = 'hnd1';
 
 function freshnessTone(value: '近即時' | '公告批次' | '定期更新' | '月更' | '日線更新'): string {
   if (value === '近即時') {
-    return 'bg-mint/20 text-emerald-900';
+    return 'badge-live';
   }
 
   if (value === '公告批次') {
-    return 'bg-[#f0d78c]/35 text-amber-950';
+    return 'badge-batch';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function formatUpdatedAt(value: string): string {
@@ -124,38 +124,38 @@ function PriceTrend({ points }: { points: Array<{ date: string; close: number }>
 
 function statusBadge(status: '處置' | '注意' | '模型觀察'): string {
   if (status === '處置') {
-    return 'bg-rose/15 text-rose-800';
+    return 'badge-danger';
   }
 
   if (status === '注意') {
-    return 'bg-amber-200/70 text-amber-900';
+    return 'badge-warning';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function eventPhaseBadge(phase: '快進處置' | '已進處置' | '事件觀察'): string {
   if (phase === '快進處置') {
-    return 'bg-amber-200/70 text-amber-900';
+    return 'badge-warning';
   }
 
   if (phase === '已進處置') {
-    return 'bg-rose/15 text-rose-800';
+    return 'badge-danger';
   }
 
-  return 'bg-white/15 text-white';
+  return 'badge-neutral';
 }
 
 function eventBiasBadge(bias: '偏空事件段' | '偏多事件段' | '中性等待'): string {
   if (bias === '偏空事件段') {
-    return 'bg-[#d04c3f]/25 text-white';
+    return 'badge-danger';
   }
 
   if (bias === '偏多事件段') {
-    return 'bg-[#73c8a9]/30 text-white';
+    return 'badge-positive';
   }
 
-  return 'bg-white/15 text-white';
+  return 'badge-neutral';
 }
 
 export default async function StockDetailPage({ params }: { params: { code: string } }) {

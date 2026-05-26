@@ -69,14 +69,14 @@ function StatCard({ label, value, helper }: { label: string; value: string; help
 
 function freshnessTone(value: MarketSnapshot['dataFreshness'][number]['freshness']): string {
   if (value === '近即時') {
-    return 'bg-mint/20 text-emerald-900';
+    return 'badge-live';
   }
 
   if (value === '公告批次') {
-    return 'bg-[#f0d78c]/35 text-amber-950';
+    return 'badge-batch';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function ProbabilityBar({ rise, fall }: { rise: number; fall: number }) {
@@ -130,54 +130,54 @@ function Sparkline({ points }: { points: PriceHistoryPoint[] }) {
 
 function statusBadge(status: StockRiskItem['officialStatus']): string {
   if (status === '處置') {
-    return 'bg-rose/15 text-rose-800';
+    return 'badge-danger';
   }
 
   if (status === '注意') {
-    return 'bg-amber-200/70 text-amber-900';
+    return 'badge-warning';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function stanceBadge(stance: StockRiskItem['tradePlan']['stance']): string {
   if (stance === '可進場') {
-    return 'bg-mint/20 text-emerald-800';
+    return 'badge-positive';
   }
 
   if (stance === '等待突破') {
-    return 'bg-amber-200/70 text-amber-900';
+    return 'badge-warning';
   }
 
   if (stance === '避免進場') {
-    return 'bg-rose/20 text-rose-800';
+    return 'badge-danger';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function eventPhaseBadge(phase: StockRiskItem['eventPlan']['phase']): string {
   if (phase === '快進處置') {
-    return 'bg-amber-200/70 text-amber-900';
+    return 'badge-warning';
   }
 
   if (phase === '已進處置') {
-    return 'bg-rose/15 text-rose-800';
+    return 'badge-danger';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function eventBiasBadge(bias: StockRiskItem['eventPlan']['bias']): string {
   if (bias === '偏空事件段') {
-    return 'bg-rose/20 text-rose-800';
+    return 'badge-danger';
   }
 
   if (bias === '偏多事件段') {
-    return 'bg-mint/20 text-emerald-800';
+    return 'badge-positive';
   }
 
-  return 'bg-tide/10 text-tide';
+  return 'badge-neutral';
 }
 
 function PriceHint({ label, level }: { label: string; level: TradeLevel | null }) {
