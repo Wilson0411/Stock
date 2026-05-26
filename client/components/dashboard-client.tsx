@@ -228,7 +228,7 @@ function CandidateCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="break-words text-lg font-semibold text-ink">{item.name}</h3>
-              <span className="rounded-full bg-tide px-2 py-1 text-xs font-medium text-white">{item.board}</span>
+              <span className="solid-tide rounded-full px-2 py-1 text-xs font-medium">{item.board}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadge(item.officialStatus)}`}>{item.officialStatus}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventPhaseBadge(item.eventPlan.phase)}`}>{item.eventPlan.phase}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventBiasBadge(item.eventPlan.bias)}`}>{item.eventPlan.bias}</span>
@@ -244,7 +244,7 @@ function CandidateCard({
             type="button"
             onClick={() => onToggleStar(item.code)}
             className={`w-full rounded-full px-3 py-2 text-sm font-medium transition sm:w-auto ${
-              starred ? 'bg-ink text-white' : 'bg-foam text-ink/70'
+              starred ? 'solid-ink' : 'bg-foam text-ink/70'
             }`}
           >
             {starred ? '追蹤中' : '加入追蹤'}
@@ -305,7 +305,7 @@ function CandidateCard({
           </div>
         ) : null}
 
-        <Link href={stockDetailRoute(item.code)} scroll={false} className="inline-flex w-full justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-tide sm:w-auto">
+        <Link href={stockDetailRoute(item.code)} scroll={false} className="solid-ink inline-flex w-full justify-center rounded-full px-4 py-2 text-sm font-medium transition sm:w-auto">
           查看個股詳情
         </Link>
       </div>
@@ -706,7 +706,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-semibold text-ink">市況面板</h2>
-                <span className={`rounded-full px-3 py-1 text-sm font-medium ${snapshot.marketPulse.stance === '偏多順風' ? 'bg-mint/20 text-emerald-800' : snapshot.marketPulse.stance === '偏空保守' ? 'bg-rose/20 text-rose-800' : 'bg-tide/10 text-tide'}`}>{snapshot.marketPulse.stance}</span>
+                <span className={`rounded-full px-3 py-1 text-sm font-medium ${snapshot.marketPulse.stance === '偏多順風' ? 'badge-positive' : snapshot.marketPulse.stance === '偏空保守' ? 'badge-danger' : 'badge-neutral'}`}>{snapshot.marketPulse.stance}</span>
               </div>
               <p className="mt-3 text-sm leading-7 text-ink/72">{snapshot.marketPulse.summary}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -748,7 +748,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                 </div>
                 <p className="mt-1 text-sm text-ink/60">這一段先看偏空劇本，不做多方搶進。</p>
               </div>
-              <span className="rounded-full bg-amber-200/70 px-3 py-2 text-sm font-medium text-amber-900">偏空事件段</span>
+              <span className="badge-warning rounded-full px-3 py-2 text-sm font-medium">偏空事件段</span>
             </div>
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.fastTrack.length > 0 ? (
@@ -762,7 +762,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                         </div>
                         <p className="mt-1 text-sm text-ink/60">{item.eventPlan.summary}</p>
                       </div>
-                      <span className="rounded-full bg-rose/15 px-3 py-1 text-sm font-medium text-rose-800">下跌 {item.fallProbability}%</span>
+                      <span className="badge-danger rounded-full px-3 py-1 text-sm font-medium">下跌 {item.fallProbability}%</span>
                     </div>
                   </Link>
                 ))
@@ -780,7 +780,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                 </div>
                 <p className="mt-1 text-sm text-ink/60">這一段不追空，改看止跌與反彈確認。</p>
               </div>
-              <span className="rounded-full bg-mint/20 px-3 py-2 text-sm font-medium text-emerald-800">偏多事件段</span>
+              <span className="badge-positive rounded-full px-3 py-2 text-sm font-medium">偏多事件段</span>
             </div>
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.disposed.length > 0 ? (
@@ -794,7 +794,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                         </div>
                         <p className="mt-1 text-sm text-ink/60">{item.eventPlan.summary}</p>
                       </div>
-                      <span className="rounded-full bg-mint/20 px-3 py-1 text-sm font-medium text-emerald-800">上漲 {item.riseProbability}%</span>
+                      <span className="badge-positive rounded-full px-3 py-1 text-sm font-medium">上漲 {item.riseProbability}%</span>
                     </div>
                   </Link>
                 ))
@@ -813,7 +813,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                   <p className="text-sm font-semibold text-ink">篩選與排序</p>
                   <p className="mt-1 text-xs text-ink/72">{filteredPool.length} 檔符合，已啟用 {activeFilterCount} 個條件</p>
                 </div>
-                <span className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">展開</span>
+                <span className="solid-ink rounded-full px-3 py-1 text-xs font-medium">展開</span>
               </summary>
               <div className="mt-4">{renderFilterControls()}</div>
             </details>
@@ -911,7 +911,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                   <div key={`${rule.category}-${rule.status}`} className="rounded-[22px] border border-ink/8 bg-white/92 px-4 py-4 shadow-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-ink">{rule.category}</p>
-                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${rule.status === '已接入' ? 'bg-mint/20 text-emerald-800' : 'bg-amber-200/70 text-amber-900'}`}>{rule.status}</span>
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${rule.status === '已接入' ? 'badge-positive' : 'badge-warning'}`}>{rule.status}</span>
                     </div>
                     <p className="mt-2 text-sm text-ink/72">{rule.note}</p>
                     <p className="mt-1 text-xs text-ink/50">來源: {rule.source}</p>

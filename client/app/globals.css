@@ -195,6 +195,26 @@ a {
   color: #8f2d2d;
 }
 
+.solid-ink {
+  background: #0b1720;
+  color: #f8fbfd;
+}
+
+.solid-ink:hover {
+  background: #12354a;
+}
+
+.solid-tide {
+  background: #12354a;
+  color: #f8fbfd;
+}
+
+.soft-contrast {
+  background: rgb(var(--panel-rgb) / 0.88);
+  color: rgb(var(--ink-rgb) / 0.92);
+  border: 1px solid rgb(var(--line-rgb) / 0.12);
+}
+
 :root[data-theme='dark'] .badge-live,
 :root[data-theme='dark'] .badge-positive {
   background: rgb(var(--mint-rgb) / 0.24);
@@ -215,6 +235,20 @@ a {
 :root[data-theme='dark'] .badge-danger {
   background: rgb(var(--rose-rgb) / 0.22);
   color: rgb(255 232 232 / 0.98);
+}
+
+:root[data-theme='dark'] .solid-ink {
+  background: #dceaf2;
+  color: #0b1720;
+}
+
+:root[data-theme='dark'] .solid-ink:hover {
+  background: #c5dbe8;
+}
+
+:root[data-theme='dark'] .solid-tide {
+  background: #7fb4d3;
+  color: #071018;
 }
 
 .content-wrap {

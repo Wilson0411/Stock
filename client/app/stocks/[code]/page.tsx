@@ -186,7 +186,7 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                 <span className={`rounded-full px-3 py-1 ${eventPhaseBadge(item.eventPlan.phase)}`}>{item.eventPlan.phase}</span>
                 <span className={`rounded-full px-3 py-1 ${eventBiasBadge(item.eventPlan.bias)}`}>{item.eventPlan.bias}</span>
                 <span className="rounded-full bg-white/15 px-3 py-1">{item.industry}</span>
-                <span className={`rounded-full px-3 py-1 ${item.tradePlan.stance === '可進場' ? 'bg-[#73c8a9]/30 text-white' : item.tradePlan.stance === '等待突破' ? 'bg-[#f0d78c]/30 text-white' : item.tradePlan.stance === '避免進場' ? 'bg-[#d04c3f]/25 text-white' : 'bg-white/15 text-white'}`}>{item.tradePlan.stance}</span>
+                <span className={`rounded-full px-3 py-1 ${item.tradePlan.stance === '可進場' ? 'badge-positive' : item.tradePlan.stance === '等待突破' ? 'badge-warning' : item.tradePlan.stance === '避免進場' ? 'badge-danger' : 'badge-neutral'}`}>{item.tradePlan.stance}</span>
               </div>
               <h1 className="mt-4 text-3xl font-semibold md:text-5xl">{item.name}</h1>
               <p className="numeric mt-2 text-lg text-white/75">{item.code}</p>
@@ -270,8 +270,8 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                   <p className="mt-1 text-sm text-ink/60">把這檔股票目前處在的事件段與下一步觀察重點攤開。</p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <span className={`rounded-full px-3 py-1 font-medium ${item.eventPlan.phase === '快進處置' ? 'bg-amber-200/70 text-amber-900' : item.eventPlan.phase === '已進處置' ? 'bg-rose/15 text-rose-800' : 'bg-tide/10 text-tide'}`}>{item.eventPlan.phase}</span>
-                  <span className={`rounded-full px-3 py-1 font-medium ${item.eventPlan.bias === '偏空事件段' ? 'bg-rose/20 text-rose-800' : item.eventPlan.bias === '偏多事件段' ? 'bg-mint/20 text-emerald-800' : 'bg-tide/10 text-tide'}`}>{item.eventPlan.bias}</span>
+                  <span className={`rounded-full px-3 py-1 font-medium ${item.eventPlan.phase === '快進處置' ? 'badge-warning' : item.eventPlan.phase === '已進處置' ? 'badge-danger' : 'badge-neutral'}`}>{item.eventPlan.phase}</span>
+                  <span className={`rounded-full px-3 py-1 font-medium ${item.eventPlan.bias === '偏空事件段' ? 'badge-danger' : item.eventPlan.bias === '偏多事件段' ? 'badge-positive' : 'badge-neutral'}`}>{item.eventPlan.bias}</span>
                 </div>
               </div>
               <p className="content-wrap mt-5 rounded-[22px] bg-[linear-gradient(135deg,#12354a,#0b1720)] px-4 py-4 text-sm leading-7 text-white/82 shadow-lg">{item.eventPlan.summary}</p>
