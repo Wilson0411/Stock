@@ -659,13 +659,13 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
           </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {snapshot.dataFreshness.map((entry) => (
-              <div key={entry.category} className="rounded-[24px] border border-ink/8 bg-white/92 p-5 shadow-sm">
+              <div key={entry.category} className="min-w-0 rounded-[24px] border border-ink/8 bg-white/92 p-5 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-lg font-semibold text-ink">{entry.category}</h3>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${freshnessTone(entry.freshness)}`}>{entry.freshness}</span>
                 </div>
-                <p className="mt-3 text-sm text-ink/65">來源: {entry.source}</p>
-                <p className="mt-2 text-sm leading-7 text-ink/72">{entry.note}</p>
+                <p className="mt-3 text-sm text-ink/65 [overflow-wrap:anywhere]">來源: {entry.source}</p>
+                <p className="mt-2 text-sm leading-7 text-ink/72 [overflow-wrap:anywhere]">{entry.note}</p>
               </div>
             ))}
           </div>
