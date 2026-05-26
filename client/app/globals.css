@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: #f4efe5;
+  --foreground: #0b1720;
+  --surface: rgba(255, 255, 255, 0.76);
+  --surface-strong: rgba(255, 255, 255, 0.9);
+  --line: rgba(11, 23, 32, 0.08);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(224, 122, 45, 0.18), transparent 26%),
+    radial-gradient(circle at 85% 12%, rgba(115, 200, 169, 0.22), transparent 20%),
+    radial-gradient(circle at 50% 100%, rgba(24, 72, 98, 0.08), transparent 35%),
+    linear-gradient(180deg, #fcf8f1 0%, #edf3f3 45%, #e1ebe6 100%);
+  color: var(--foreground);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 88%);
+  opacity: 0.32;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.numeric {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.bg-grid {
+  position: relative;
+}
+
+.bg-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.6), transparent 22%),
+    radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.4), transparent 18%);
+  opacity: 0.75;
+}
+
+.glass-card {
+  background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 20px 50px rgba(11, 23, 32, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(11, 23, 32, 0.12), transparent);
+}
+
+.metric-tile {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.tooltip-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 23, 32, 0.96);
+  box-shadow: 0 24px 48px rgba(11, 23, 32, 0.28);
+}
+
+.hint-summary::-webkit-details-marker {
+  display: none;
+}
+
+.hint-card[open] {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.hint-card[open] .hint-summary {
+  margin-bottom: 0.25rem;
+}
+
+.soft-chip {
+  border: 1px solid rgba(11, 23, 32, 0.06);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+::selection {
+  background: rgba(24, 72, 98, 0.18);
+}
+
+@media (max-width: 767px) {
+  body::before {
+    background-size: 22px 22px;
+    opacity: 0.22;
+  }
+
+  .glass-card {
+    box-shadow: 0 16px 32px rgba(11, 23, 32, 0.08);
+  }
+
+  .section-title {
+    align-items: flex-start;
+  }
+
+  .section-title::after {
+    display: none;
+  }
+}

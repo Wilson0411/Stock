@@ -1,0 +1,35 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders and user settings
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Frontend: Next.js / Bun
+client/node_modules/
+client/.next/
+client/out/
+client/.turbo/
+client/.vercel/
+client/coverage/
+client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+
+# Backend: ASP.NET Core
+API/bin/
+API/obj/
+API/.vs/
