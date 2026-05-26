@@ -9,12 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#0b1720',
-        tide: '#12354a',
-        signal: '#e07a2d',
-        foam: '#ecf5f7',
-        mint: '#73c8a9',
-        rose: '#e66b6b'
+        ink: 'rgb(var(--ink-rgb) / <alpha-value>)',
+        tide: 'rgb(var(--tide-rgb) / <alpha-value>)',
+        signal: 'rgb(var(--signal-rgb) / <alpha-value>)',
+        foam: 'rgb(var(--foam-rgb) / <alpha-value>)',
+        mint: 'rgb(var(--mint-rgb) / <alpha-value>)',
+        rose: 'rgb(var(--rose-rgb) / <alpha-value>)'
       },
       boxShadow: {
         panel: '0 18px 60px rgba(7, 20, 26, 0.18)'

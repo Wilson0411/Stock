@@ -381,6 +381,36 @@ function CompactList({
   );
 }
 
+function MarketDefinitionCard({
+  label,
+  value,
+  description,
+  detail
+}: {
+  label: string;
+  value: string;
+  description: string;
+  detail: string;
+}) {
+  return (
+    <details className="metric-help-card metric-tile rounded-[22px] px-4 py-4">
+      <summary className="hint-summary flex cursor-pointer list-none items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-ink/60">{label}</p>
+            <span className="metric-help-button rounded-full px-2 py-0.5 text-[11px] font-medium">說明</span>
+          </div>
+          <p className="numeric mt-2 text-2xl font-semibold text-ink">{value}</p>
+        </div>
+      </summary>
+      <div className="mt-3 space-y-2 border-t border-ink/8 pt-3 text-sm leading-7 text-ink/72">
+        <p>{description}</p>
+        <p className="soft-chip rounded-2xl px-3 py-2">{detail}</p>
+      </div>
+    </details>
+  );
+}
+
 export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot }) {
   const [query, setQuery] = useState('');
   const [industryFilter, setIndustryFilter] = useState('全部');
@@ -654,12 +684,12 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold text-ink">資料新鮮度</h2>
-              <p className="mt-1 text-sm text-ink/60">這個頁面每次請求都會重抓，但不同來源的更新頻率不同。</p>
+              <p className="muted-copy mt-1 text-sm">這個頁面每次請求都會重抓，但不同來源的更新頻率不同。</p>
             </div>
           </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {snapshot.dataFreshness.map((entry) => (
-              <div key={entry.category} className="min-w-0 rounded-[24px] border border-ink/8 bg-white/92 p-5 shadow-sm">
+              <div key={entry.category} className="panel-card min-w-0 rounded-[24px] p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-lg font-semibold text-ink">{entry.category}</h3>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${freshnessTone(entry.freshness)}`}>{entry.freshness}</span>
@@ -678,20 +708,24 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                 <h2 className="text-2xl font-semibold text-ink">市況面板</h2>
                 <span className={`rounded-full px-3 py-1 text-sm font-medium ${snapshot.marketPulse.stance === '偏多順風' ? 'bg-mint/20 text-emerald-800' : snapshot.marketPulse.stance === '偏空保守' ? 'bg-rose/20 text-rose-800' : 'bg-tide/10 text-tide'}`}>{snapshot.marketPulse.stance}</span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-ink/70">{snapshot.marketPulse.summary}</p>
+              <p className="mt-3 text-sm leading-7 text-ink/72">{snapshot.marketPulse.summary}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="metric-tile rounded-[22px] px-4 py-4">
                   <p className="text-sm text-ink/60">上漲 / 下跌</p>
                   <p className="numeric mt-2 text-2xl font-semibold text-ink">{snapshot.marketPulse.advancers} / {snapshot.marketPulse.decliners}</p>
                 </div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">平均日變動</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{snapshot.marketPulse.averageChangePct}%</p>
-                </div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">市場寬度</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{snapshot.marketPulse.breadthPct}%</p>
-                </div>
+                <MarketDefinitionCard
+                  label="平均日變動"
+                  value={`${snapshot.marketPulse.averageChangePct}%`}
+                  description="把整個股票池每一檔的當日漲跌幅做平均，用來看今天整體平均是偏漲還是偏跌。"
+                  detail="如果少數權值股很強、但大多數股票普通，這個數字可能仍偏高，所以要和市場寬度一起看。"
+                />
+                <MarketDefinitionCard
+                  label="市場寬度"
+                  value={`${snapshot.marketPulse.breadthPct}%`}
+                  description="用上漲家數減下跌家數，再除以全部股票數量，反映今天是多數股票一起漲，還是只有少數股票在撐盤。"
+                  detail="數值越高代表盤面越廣泛偏多；如果是負值，代表下跌家數多於上漲家數。"
+                />
               </div>
             </div>
             <div className="space-y-3">
@@ -773,11 +807,11 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
 
         <section className="glass-card sticky top-3 z-20 mt-8 rounded-[30px] p-4 md:p-6 lg:static">
           <div className="lg:hidden">
-            <details className="rounded-[24px] bg-white/55 p-1">
-              <summary className="hint-summary flex list-none items-center justify-between rounded-[20px] bg-white/88 px-4 py-4">
+            <details className="panel-shell rounded-[24px] p-1">
+              <summary className="hint-summary panel-shell-strong flex list-none items-center justify-between rounded-[20px] px-4 py-4">
                 <div>
                   <p className="text-sm font-semibold text-ink">篩選與排序</p>
-                  <p className="mt-1 text-xs text-ink/60">{filteredPool.length} 檔符合，已啟用 {activeFilterCount} 個條件</p>
+                  <p className="mt-1 text-xs text-ink/72">{filteredPool.length} 檔符合，已啟用 {activeFilterCount} 個條件</p>
                 </div>
                 <span className="rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">展開</span>
               </summary>

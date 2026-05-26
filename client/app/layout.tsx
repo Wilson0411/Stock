@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
+
+import ThemeToggle from '@/components/theme-toggle';
 import './globals.css';
 
 export const viewport: Viewport = {
@@ -32,8 +35,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-Hant">
-      <body>{children}</body>
+    <html lang="zh-Hant" suppressHydrationWarning>
+      <body>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(() => {
+            try {
+              const saved = window.localStorage.getItem('stock-theme');
+              const theme = saved === 'light' || saved === 'dark'
+                ? saved
+                : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+              document.documentElement.dataset.theme = theme;
+            } catch {
+              document.documentElement.dataset.theme = 'light';
+            }
+          })();`}
+        </Script>
+        <ThemeToggle />
+        {children}
+      </body>
     </html>
   );
 }
