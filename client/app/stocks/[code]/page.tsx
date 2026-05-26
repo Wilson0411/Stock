@@ -29,7 +29,7 @@ function formatUpdatedAt(value: string): string {
 function PriceHint({ label, value, reasons }: { label: string; value: number | null; reasons: string[] }) {
   if (value === null) {
     return (
-      <div className="rounded-[22px] bg-foam px-4 py-4 text-sm text-ink/60">
+      <div className="content-wrap rounded-[22px] bg-foam px-4 py-4 text-sm text-ink/60">
         <p>{label}</p>
         <p className="mt-2">暫不提供</p>
       </div>
@@ -37,7 +37,7 @@ function PriceHint({ label, value, reasons }: { label: string; value: number | n
   }
 
   return (
-    <details className="hint-card rounded-[22px] border border-ink/8 bg-white/82 px-4 py-4 text-sm text-ink/60 shadow-sm">
+    <details className="hint-card content-wrap rounded-[22px] border border-ink/8 bg-white/82 px-4 py-4 text-sm text-ink/60 shadow-sm">
       <summary className="hint-summary flex cursor-pointer list-none items-start justify-between gap-3">
         <div>
           <p>{label}</p>
@@ -47,7 +47,7 @@ function PriceHint({ label, value, reasons }: { label: string; value: number | n
       </summary>
       <div className="mt-3 space-y-2 border-t border-ink/8 pt-3 text-xs leading-6 text-ink/72">
         {reasons.map((reason) => (
-          <p key={`${label}-${reason}`} className="soft-chip rounded-2xl px-3 py-2">
+          <p key={`${label}-${reason}`} className="soft-chip content-wrap rounded-2xl px-3 py-2">
             {reason}
           </p>
         ))}
@@ -103,7 +103,7 @@ function PriceTrend({ points }: { points: Array<{ date: string; close: number }>
   const rising = values[values.length - 1] >= values[0];
 
   return (
-    <div className="rounded-[28px] border border-ink/8 bg-white/90 p-4">
+    <div className="content-wrap rounded-[28px] border border-ink/8 bg-white/90 p-4">
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-56 w-full overflow-visible rounded-[20px] bg-foam p-3">
         <polyline
           fill="none"
@@ -236,7 +236,7 @@ export default async function StockDetailPage({ params }: { params: { code: stri
         </section>
 
         <section className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-8">
+          <div className="min-w-0 space-y-8">
             <section className="glass-card rounded-[30px] p-6">
               <h2 className="text-2xl font-semibold text-ink">交易計畫</h2>
               <p className="mt-1 text-sm text-ink/60">滑鼠移到價格卡上可以看到為什麼這裡是建議進出場位置。</p>
@@ -245,11 +245,11 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                 <PriceHint label={item.tradePlan.primarySetup?.exitLabel ?? '建議停利'} value={item.tradePlan.takeProfit?.price ?? null} reasons={item.tradePlan.takeProfit?.reasons ?? []} />
                 <PriceHint label={item.tradePlan.primarySetup?.stopLabel ?? '建議停損'} value={item.tradePlan.stopLoss?.price ?? null} reasons={item.tradePlan.stopLoss?.reasons ?? []} />
               </div>
-              <div className="mt-4 rounded-[22px] bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-4 text-sm text-white/82 shadow-lg">
+                <div className="content-wrap mt-4 rounded-[22px] bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-4 text-sm text-white/82 shadow-lg">
                 {item.tradePlan.riskRewardRatio !== null ? `${item.tradePlan.primarySetup?.side ?? '主劇本'}估算風險報酬比 ${item.tradePlan.riskRewardRatio}。` : '目前暫無可用的風險報酬比。'}
               </div>
               {item.tradePlan.alternateSetup ? (
-                <div className="mt-4 rounded-[22px] border border-ink/8 bg-white/88 px-4 py-4 text-sm leading-7 text-ink/72 shadow-sm">
+                <div className="content-wrap mt-4 rounded-[22px] border border-ink/8 bg-white/88 px-4 py-4 text-sm leading-7 text-ink/72 shadow-sm">
                   <p className="font-medium text-ink">備用{item.tradePlan.alternateSetup.side}劇本</p>
                   <p className="mt-2">{item.tradePlan.alternateSetup.summary}</p>
                   <p className="mt-2">
@@ -274,18 +274,18 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                   <span className={`rounded-full px-3 py-1 font-medium ${item.eventPlan.bias === '偏空事件段' ? 'bg-rose/20 text-rose-800' : item.eventPlan.bias === '偏多事件段' ? 'bg-mint/20 text-emerald-800' : 'bg-tide/10 text-tide'}`}>{item.eventPlan.bias}</span>
                 </div>
               </div>
-              <p className="mt-5 rounded-[22px] bg-[linear-gradient(135deg,#12354a,#0b1720)] px-4 py-4 text-sm leading-7 text-white/82 shadow-lg">{item.eventPlan.summary}</p>
+              <p className="content-wrap mt-5 rounded-[22px] bg-[linear-gradient(135deg,#12354a,#0b1720)] px-4 py-4 text-sm leading-7 text-white/82 shadow-lg">{item.eventPlan.summary}</p>
               <div className="mt-5 grid gap-5 lg:grid-cols-2">
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-ink">操作節點</h3>
                   {item.eventPlan.tactics.map((entry) => (
-                    <p key={`tactic-${entry}`} className="soft-chip rounded-2xl px-4 py-3 text-sm leading-7 text-ink/72">{entry}</p>
+                    <p key={`tactic-${entry}`} className="soft-chip content-wrap rounded-2xl px-4 py-3 text-sm leading-7 text-ink/72">{entry}</p>
                   ))}
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-ink">事件節奏</h3>
                   {item.eventPlan.timeline.map((entry, index) => (
-                    <div key={`timeline-${entry}`} className="relative rounded-[22px] border border-ink/8 bg-white/92 px-4 py-4 shadow-sm">
+                    <div key={`timeline-${entry}`} className="content-wrap relative rounded-[22px] border border-ink/8 bg-white/92 px-4 py-4 shadow-sm">
                       <span className="absolute left-4 top-4 numeric text-xs text-ink/35">0{index + 1}</span>
                       <p className="pl-8 text-sm leading-7 text-ink/72">{entry}</p>
                     </div>
@@ -302,7 +302,7 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                   </div>
                   <p className="mt-1 text-sm text-ink/60">用較長的時間窗看波動是否持續升溫。</p>
                 </div>
-                <span className="soft-chip rounded-full px-3 py-2 text-sm text-ink/70">{displayedHistory.length} 筆</span>
+                <span className="soft-chip content-wrap rounded-full px-3 py-2 text-sm text-ink/70">{displayedHistory.length} 筆</span>
               </div>
               <PriceTrend points={displayedHistory} />
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -325,11 +325,11 @@ export default async function StockDetailPage({ params }: { params: { code: stri
               <h2 className="text-2xl font-semibold text-ink">原因拆解</h2>
               <div className="mt-5 space-y-5">
                 {insightGroups.map((group) => (
-                  <div key={group.title} className="rounded-[24px] border border-ink/8 bg-white/92 p-5 shadow-sm">
+                  <div key={group.title} className="content-wrap rounded-[24px] border border-ink/8 bg-white/92 p-5 shadow-sm">
                     <h3 className="text-lg font-semibold text-ink">{group.title}</h3>
                     <div className="mt-3 space-y-2 text-sm leading-7 text-ink/70">
                       {group.items.map((entry) => (
-                        <p key={`${group.title}-${entry}`} className="soft-chip rounded-2xl px-4 py-3">
+                        <p key={`${group.title}-${entry}`} className="soft-chip content-wrap rounded-2xl px-4 py-3">
                           {entry}
                         </p>
                       ))}
@@ -340,18 +340,18 @@ export default async function StockDetailPage({ params }: { params: { code: stri
             </section>
           </div>
 
-          <div className="space-y-8">
+          <div className="min-w-0 space-y-8">
             <section className="glass-card rounded-[30px] p-6">
               <h2 className="text-2xl font-semibold text-ink">資料新鮮度</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-ink/70">
                 {detail.dataFreshness.map((entry) => (
-                  <div key={entry.category} className="rounded-[22px] border border-ink/8 bg-white/92 px-4 py-4 shadow-sm">
+                  <div key={entry.category} className="content-wrap rounded-[22px] border border-ink/8 bg-white/92 px-4 py-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <p className="font-medium text-ink">{entry.category}</p>
                       <span className={`rounded-full px-3 py-1 text-xs font-medium ${freshnessTone(entry.freshness)}`}>{entry.freshness}</span>
                     </div>
-                    <p className="mt-2 text-ink/60">來源: {entry.source}</p>
-                    <p className="mt-2">{entry.note}</p>
+                    <p className="content-wrap mt-2 text-ink/60">來源: {entry.source}</p>
+                    <p className="content-wrap mt-2">{entry.note}</p>
                   </div>
                 ))}
               </div>
@@ -360,34 +360,34 @@ export default async function StockDetailPage({ params }: { params: { code: stri
             <section className="glass-card rounded-[30px] p-6">
               <h2 className="text-2xl font-semibold text-ink">公司基本資料</h2>
               <div className="mt-5 grid gap-3 text-sm text-ink/70">
-                <div className="metric-tile rounded-[22px] px-4 py-4">產業: {item.industry}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">上市日期: {profile?.listedDate ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">董事長: {profile?.chairman ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">總經理: {profile?.generalManager ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">發言人: {profile?.spokesperson ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">總機電話: {profile?.phone ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">地址: {profile?.address ?? '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">實收資本額: {profile ? formatLargeNumber(profile.paidInCapital ?? 0) : '暫無'}</div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">網站: {profile?.website ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">產業: {item.industry}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">上市日期: {profile?.listedDate ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">董事長: {profile?.chairman ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">總經理: {profile?.generalManager ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">發言人: {profile?.spokesperson ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">總機電話: {profile?.phone ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">地址: {profile?.address ?? '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">實收資本額: {profile ? formatLargeNumber(profile.paidInCapital ?? 0) : '暫無'}</div>
+                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">網站: {profile?.website ?? '暫無'}</div>
               </div>
             </section>
 
             <section className="glass-card rounded-[30px] p-6">
               <h2 className="text-2xl font-semibold text-ink">官方訊號</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-ink/70">
-                <p className="soft-chip rounded-2xl px-4 py-3">目前狀態: {item.officialStatus}</p>
-                <p className="soft-chip rounded-2xl px-4 py-3">公告筆數: {item.officialAnnouncementCount}</p>
-                <p className="soft-chip rounded-2xl px-4 py-3">補充說明: {item.officialReference ?? '目前沒有額外官方補充內容。'}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">目前狀態: {item.officialStatus}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">公告筆數: {item.officialAnnouncementCount}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">補充說明: {item.officialReference ?? '目前沒有額外官方補充內容。'}</p>
               </div>
             </section>
 
             <section className="glass-card rounded-[30px] p-6">
               <h2 className="text-2xl font-semibold text-ink">制度規則快照</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-ink/70">
-                <p className="soft-chip rounded-2xl px-4 py-3">除權息: {item.ruleFacts.exDividend.exDate ? `${item.ruleFacts.exDividend.exDate} ${item.ruleFacts.exDividend.kind ?? ''}` : '近期無事件窗'}</p>
-                <p className="soft-chip rounded-2xl px-4 py-3">融資使用率: {item.ruleFacts.marginShort.marginUsagePct !== null ? `${item.ruleFacts.marginShort.marginUsagePct}%` : '暫無'} / 融券使用率: {item.ruleFacts.marginShort.shortUsagePct !== null ? `${item.ruleFacts.marginShort.shortUsagePct}%` : '暫無'}</p>
-                <p className="soft-chip rounded-2xl px-4 py-3">重大訊息: {item.ruleFacts.materialInfo.count > 0 ? `${item.ruleFacts.materialInfo.count} 筆，最新為 ${item.ruleFacts.materialInfo.latestTitle ?? '未提供'}` : '近期無重大訊息事件窗'}</p>
-                <p className="soft-chip rounded-2xl px-4 py-3">當沖限制: {item.ruleFacts.dayTradeRestriction.active ? `${item.ruleFacts.dayTradeRestriction.kinds.join('、')}，至 ${item.ruleFacts.dayTradeRestriction.endDate ?? '未提供'}` : '目前無限制'}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">除權息: {item.ruleFacts.exDividend.exDate ? `${item.ruleFacts.exDividend.exDate} ${item.ruleFacts.exDividend.kind ?? ''}` : '近期無事件窗'}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">融資使用率: {item.ruleFacts.marginShort.marginUsagePct !== null ? `${item.ruleFacts.marginShort.marginUsagePct}%` : '暫無'} / 融券使用率: {item.ruleFacts.marginShort.shortUsagePct !== null ? `${item.ruleFacts.marginShort.shortUsagePct}%` : '暫無'}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">重大訊息: {item.ruleFacts.materialInfo.count > 0 ? `${item.ruleFacts.materialInfo.count} 筆，最新為 ${item.ruleFacts.materialInfo.latestTitle ?? '未提供'}` : '近期無重大訊息事件窗'}</p>
+                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">當沖限制: {item.ruleFacts.dayTradeRestriction.active ? `${item.ruleFacts.dayTradeRestriction.kinds.join('、')}，至 ${item.ruleFacts.dayTradeRestriction.endDate ?? '未提供'}` : '目前無限制'}</p>
               </div>
             </section>
           </div>

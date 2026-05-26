@@ -165,6 +165,12 @@ a {
   background: rgb(var(--panel-soft-rgb) / 0.72);
 }
 
+.content-wrap {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .theme-toggle {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 16px);
