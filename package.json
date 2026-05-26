@@ -1,0 +1,15 @@
+{
+  "name": "stock-root",
+  "private": true,
+  "packageManager": "bun@1.3.13",
+  "scripts": {
+    "dev": "bun --cwd client run dev",
+    "build": "bun --cwd client run build",
+    "start": "bun --cwd client run start"
+  },
+  "dependencies": {
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

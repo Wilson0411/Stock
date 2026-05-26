@@ -8,12 +8,13 @@
 ## 部署前提
 
 - 專案已推到 GitHub。
-- 以 `client/` 作為 Vercel 的 Root Directory。
+- 可以直接用 repository root 匯入 Vercel。
+- 如果 Vercel 專案已存在且仍設定 `client/` 為 Root Directory，也可以沿用，不需要改動。
 
 ## Vercel 設定
 
 1. 在 Vercel 新增專案並連接 GitHub repository。
-2. Root Directory 選 `client`。
+2. Root Directory 保持 repository root 即可。
 3. Framework Preset 選 Next.js。
 4. 安裝、建置、啟動命令如下：
 
@@ -25,6 +26,7 @@ Output Directory: .next
 
 ## 已整理好的專案設定
 
+- repository root 已新增 `package.json` 與 `vercel.json`，可把建置正確導到 `client/`。
 - `client/package.json` 已標註 Bun package manager。
 - `client/vercel.json` 已指定 Vercel 使用 Bun 指令。
 - 首頁、個股頁、API route 已標註動態渲染與偏好區域，較適合亞洲使用者。
