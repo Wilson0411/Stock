@@ -2029,6 +2029,7 @@ export async function getStockDetail(code: string): Promise<StockDetail | null> 
     return null;
   }
 
+  const history30dPromise = fetchYahooHistory(code, '3mo');
   const { twseQuotes, optionalData, enrichedQuotes, scoredUniverse, marketPulse } = await loadMarketBaseData();
   const { officialFlags, profiles, revenues, exDividendPlans, marginShortSignals, materialInfoSignals, dayTradeRestrictions } = optionalData;
   const targetQuote = twseQuotes.find((item) => item.code === code);
@@ -2054,7 +2055,7 @@ export async function getStockDetail(code: string): Promise<StockDetail | null> 
     materialInfoSignals,
     dayTradeRestrictions
   );
-  const history30d = await fetchYahooHistory(code, '3mo');
+  const history30d = await history30dPromise;
   const item = finalizeItem(baseItem, history30d, marketPulse);
 
   return {

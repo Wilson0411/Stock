@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import BackToDashboardButton from '@/components/back-to-dashboard-button';
 import { getStockDetail } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
@@ -170,12 +170,10 @@ export default async function StockDetailPage({ params }: { params: { code: stri
   const changeClass = item.change >= 0 ? 'text-rose' : 'text-emerald-700';
 
   return (
-    <main className="bg-grid min-h-screen overflow-hidden">
+    <main className="bg-grid min-h-screen overflow-x-clip">
       <div className="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-10">
-        <div className="sticky top-3 z-20 mb-6 md:static">
-          <Link href="/" className="inline-flex rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-ink shadow-sm transition hover:bg-white">
-            返回總覽
-          </Link>
+        <div className="mb-6">
+          <BackToDashboardButton />
         </div>
 
         <section className="relative overflow-hidden rounded-[40px] border border-white/60 bg-[linear-gradient(135deg,rgba(8,19,27,0.98),rgba(18,53,74,0.94),rgba(224,122,45,0.84))] px-6 py-8 text-white shadow-[0_30px_80px_rgba(11,23,32,0.18)] md:px-10 md:py-10">

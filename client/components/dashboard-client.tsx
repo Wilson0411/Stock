@@ -224,10 +224,10 @@ function CandidateCard({
   return (
     <div className="glass-card grid gap-5 rounded-[28px] p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_26px_60px_rgba(11,23,32,0.12)] lg:grid-cols-[1.2fr_0.65fr_0.9fr]">
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold text-ink">{item.name}</h3>
+              <h3 className="break-words text-lg font-semibold text-ink">{item.name}</h3>
               <span className="rounded-full bg-tide px-2 py-1 text-xs font-medium text-white">{item.board}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadge(item.officialStatus)}`}>{item.officialStatus}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventPhaseBadge(item.eventPlan.phase)}`}>{item.eventPlan.phase}</span>
@@ -243,7 +243,7 @@ function CandidateCard({
           <button
             type="button"
             onClick={() => onToggleStar(item.code)}
-            className={`rounded-full px-3 py-2 text-sm font-medium transition ${
+            className={`w-full rounded-full px-3 py-2 text-sm font-medium transition sm:w-auto ${
               starred ? 'bg-ink text-white' : 'bg-foam text-ink/70'
             }`}
           >
@@ -305,7 +305,7 @@ function CandidateCard({
           </div>
         ) : null}
 
-        <Link href={stockDetailRoute(item.code)} className="inline-flex rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-tide">
+        <Link href={stockDetailRoute(item.code)} scroll={false} className="inline-flex w-full justify-center rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-tide sm:w-auto">
           查看個股詳情
         </Link>
       </div>
@@ -361,10 +361,10 @@ function CompactList({
       </div>
       <div className="space-y-3">
         {items.map((item) => (
-          <Link key={`${title}-${item.code}`} href={stockDetailRoute(item.code)} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
+          <Link key={`${title}-${item.code}`} href={stockDetailRoute(item.code)} scroll={false} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="font-semibold text-ink">{item.name}</p>
                   <span className="numeric text-sm text-ink/50">{item.code}</span>
                 </div>
@@ -590,7 +590,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
   );
 
   return (
-    <main className="bg-grid min-h-screen overflow-hidden">
+    <main className="bg-grid min-h-screen overflow-x-clip">
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         <section className="relative overflow-hidden rounded-[40px] border border-white/60 bg-[linear-gradient(135deg,rgba(8,19,27,0.98),rgba(18,53,74,0.94),rgba(224,122,45,0.84))] px-6 py-8 text-white shadow-[0_30px_80px_rgba(11,23,32,0.18)] md:px-10 md:py-10">
           <div className="absolute -right-10 top-6 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
@@ -719,10 +719,10 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.fastTrack.length > 0 ? (
                 snapshot.eventBoards.fastTrack.slice(0, 6).map((item) => (
-                  <Link key={`fast-${item.code}`} href={stockDetailRoute(item.code)} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
+                  <Link key={`fast-${item.code}`} href={stockDetailRoute(item.code)} scroll={false} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
+                    <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-ink">{item.name}</p>
                           <span className="numeric text-sm text-ink/50">{item.code}</span>
                         </div>
@@ -751,10 +751,10 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.disposed.length > 0 ? (
                 snapshot.eventBoards.disposed.slice(0, 6).map((item) => (
-                  <Link key={`disposed-${item.code}`} href={stockDetailRoute(item.code)} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
+                  <Link key={`disposed-${item.code}`} href={stockDetailRoute(item.code)} scroll={false} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:-translate-y-0.5 hover:border-tide/30 hover:bg-white hover:shadow-lg">
+                    <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-ink">{item.name}</p>
                           <span className="numeric text-sm text-ink/50">{item.code}</span>
                         </div>
@@ -837,10 +837,10 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
               <div className="mt-5 space-y-3">
                 {snapshot.officialSpotlight.length > 0 ? (
                   snapshot.officialSpotlight.map((item) => (
-                    <Link key={`official-${item.code}`} href={stockDetailRoute(item.code)} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:border-tide/30 hover:bg-white">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
+                    <Link key={`official-${item.code}`} href={stockDetailRoute(item.code)} scroll={false} className="block rounded-[22px] border border-ink/8 bg-white/90 p-4 transition hover:border-tide/30 hover:bg-white">
+                      <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold text-ink">{item.name}</p>
                             <span className="numeric text-sm text-ink/50">{item.code}</span>
                           </div>
