@@ -5,7 +5,8 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 
 import MetricDisclosure from '@/components/metric-disclosure';
-import type { MarketSnapshot, PriceHistoryPoint, StockRiskItem, TradeLevel } from '@/lib/market';
+import TradePlanVariantToggle from '@/components/trade-plan-variant-toggle';
+import type { MarketSnapshot, PriceHistoryPoint, StockRiskItem, TradeLevel, TradePlanVariantId } from '@/lib/market';
 
 const WATCHLIST_STORAGE_KEY = 'stock-risk-watchlist';
 type RuleCategory = StockRiskItem['ruleSignals'][number]['category'];
@@ -334,12 +335,15 @@ function PriceHint({ label, level }: { label: string; level: TradeLevel | null }
 function CandidateCard({
   item,
   starred,
-  onToggleStar
+  onToggleStar,
+  selectedTradePlanVariant
 }: {
   item: StockRiskItem;
   starred: boolean;
   onToggleStar: (code: string) => void;
+  selectedTradePlanVariant: TradePlanVariantId;
 }) {
+  const plan = item.tradePlan.variants[selectedTradePlanVariant] ?? item.tradePlan;
   const changeClass = item.change >= 0 ? 'text-rose' : 'text-emerald-700';
 
   return (
@@ -353,7 +357,7 @@ function CandidateCard({
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadge(item.officialStatus)}`}>{item.officialStatus}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventPhaseBadge(item.eventPlan.phase)}`}>{item.eventPlan.phase}</span>
               <span className={`rounded-full px-2 py-1 text-xs font-medium ${eventBiasBadge(item.eventPlan.bias)}`}>{item.eventPlan.bias}</span>
-              <span className={`rounded-full px-2 py-1 text-xs font-medium ${stanceBadge(item.tradePlan.stance)}`}>{item.tradePlan.stance}</span>
+              <span className={`rounded-full px-2 py-1 text-xs font-medium ${stanceBadge(plan.stance)}`}>{plan.label} {plan.stance}</span>
               <span className="numeric text-sm text-ink/55">{item.code}</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-ink/65">
@@ -412,9 +416,9 @@ function CandidateCard({
         <ProbabilityBar rise={item.riseProbability} fall={item.fallProbability} />
 
         <div className="grid gap-3 md:grid-cols-3">
-          <PriceHint label={item.tradePlan.primarySetup?.entryLabel ?? '建議進場'} level={item.tradePlan.entry} />
-          <PriceHint label={item.tradePlan.primarySetup?.exitLabel ?? '建議停利'} level={item.tradePlan.takeProfit} />
-          <PriceHint label={item.tradePlan.primarySetup?.stopLabel ?? '建議停損'} level={item.tradePlan.stopLoss} />
+          <PriceHint label={plan.primarySetup?.entryLabel ?? '建議進場'} level={plan.entry} />
+          <PriceHint label={plan.primarySetup?.exitLabel ?? '建議停利'} level={plan.takeProfit} />
+          <PriceHint label={plan.primarySetup?.stopLabel ?? '建議停損'} level={plan.stopLoss} />
         </div>
 
         <MetricDisclosure
@@ -423,9 +427,9 @@ function CandidateCard({
           calculation={homeMetricHelp('trade.riskRewardRatio').calculation}
           summary={
             <p>
-              {item.tradePlan.preferredSide !== '觀望' ? `${item.tradePlan.preferredSide}主劇本: ` : ''}
-              {item.tradePlan.summary}
-              {item.tradePlan.riskRewardRatio !== null ? ` 風險報酬比約 ${item.tradePlan.riskRewardRatio}。` : ''}
+              {plan.preferredSide !== '觀望' ? `${plan.preferredSide}主劇本: ` : ''}
+              {plan.summary}
+              {plan.riskRewardRatio !== null ? ` 風險報酬比約 ${plan.riskRewardRatio}。` : ''}
             </p>
           }
         />
@@ -588,6 +592,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
   const [eventFilter, setEventFilter] = useState<'事件交易模式' | '快進處置' | '已進處置' | '全部'>('事件交易模式');
   const [ruleFilter, setRuleFilter] = useState<'全部' | '只看制度規則' | RuleCategory>('全部');
   const [sortBy, setSortBy] = useState<'風險' | '7日走勢' | '成交熱度' | '上漲機率' | '規則命中'>('風險');
+  const [selectedTradePlanVariant, setSelectedTradePlanVariant] = useState<TradePlanVariantId>('conservative');
   const [starredCodes, setStarredCodes] = useState<string[]>([]);
   const availableRuleCategories = [...new Set(snapshot.searchPool.flatMap((item) => item.ruleSignals.map((signal) => signal.category)))].sort((left, right) => left.localeCompare(right, 'zh-Hant'));
 
@@ -1026,6 +1031,16 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
           </div>
         </section>
 
+        <section className="glass-card mt-6 rounded-[30px] p-4 md:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-ink">交易計畫版本</p>
+              <p className="mt-1 text-xs text-ink/60">候選卡與自選追蹤會同步切換保守版 / 積極版，各價位卡都可展開看理由。</p>
+            </div>
+            <TradePlanVariantToggle value={selectedTradePlanVariant} onChange={setSelectedTradePlanVariant} />
+          </div>
+        </section>
+
         <section className="mt-8 grid gap-8 xl:grid-cols-[1.55fr_0.95fr]">
           <div className="space-y-8">
             <section className="glass-card rounded-[30px] p-6">
@@ -1041,7 +1056,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
               <div className="mt-5 space-y-4">
                 {trackedItems.length > 0 ? (
                   trackedItems.map((item) => (
-                    <CandidateCard key={`tracked-${item.code}`} item={item} starred onToggleStar={toggleStar} />
+                    <CandidateCard key={`tracked-${item.code}`} item={item} starred onToggleStar={toggleStar} selectedTradePlanVariant={selectedTradePlanVariant} />
                   ))
                 ) : (
                   <div className="metric-tile rounded-[24px] px-4 py-6 text-sm text-ink/65">從下方候選池加入追蹤後，這裡會固定顯示。</div>
@@ -1061,7 +1076,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
               </div>
               <div className="mt-5 space-y-4">
                 {filteredPool.slice(0, 18).map((item) => (
-                  <CandidateCard key={item.code} item={item} starred={starredCodes.includes(item.code)} onToggleStar={toggleStar} />
+                  <CandidateCard key={item.code} item={item} starred={starredCodes.includes(item.code)} onToggleStar={toggleStar} selectedTradePlanVariant={selectedTradePlanVariant} />
                 ))}
               </div>
             </section>

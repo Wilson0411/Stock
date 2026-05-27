@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 
 import BackToDashboardButton from '@/components/back-to-dashboard-button';
 import MetricDisclosure from '@/components/metric-disclosure';
+import StockTradePlanPanel from '@/components/stock-trade-plan-panel';
 import { getStockDetail } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
@@ -374,32 +375,7 @@ export default async function StockDetailPage({ params }: { params: { code: stri
 
         <section className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="min-w-0 space-y-8">
-            <section className="glass-card rounded-[30px] p-6">
-              <h2 className="text-2xl font-semibold text-ink">交易計畫</h2>
-              <p className="mt-1 text-sm text-ink/60">滑鼠移到價格卡上可以看到為什麼這裡是建議進出場位置。</p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <PriceHint label={item.tradePlan.primarySetup?.entryLabel ?? '建議進場'} value={item.tradePlan.entry?.price ?? null} reasons={item.tradePlan.entry?.reasons ?? []} />
-                <PriceHint label={item.tradePlan.primarySetup?.exitLabel ?? '建議停利'} value={item.tradePlan.takeProfit?.price ?? null} reasons={item.tradePlan.takeProfit?.reasons ?? []} />
-                <PriceHint label={item.tradePlan.primarySetup?.stopLabel ?? '建議停損'} value={item.tradePlan.stopLoss?.price ?? null} reasons={item.tradePlan.stopLoss?.reasons ?? []} />
-              </div>
-              <MetricDisclosure
-                className="content-wrap mt-4 rounded-[22px] bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-4 text-sm text-white/82 shadow-lg"
-                source={stockMetricHelp('trade.riskRewardRatio').source}
-                calculation={stockMetricHelp('trade.riskRewardRatio').calculation}
-                summary={<p>{item.tradePlan.riskRewardRatio !== null ? `${item.tradePlan.primarySetup?.side ?? '主劇本'}估算風險報酬比 ${item.tradePlan.riskRewardRatio}。` : '目前暫無可用的風險報酬比。'}</p>}
-              />
-              {item.tradePlan.alternateSetup ? (
-                <div className="content-wrap mt-4 rounded-[22px] border border-ink/8 bg-white/88 px-4 py-4 text-sm leading-7 text-ink/72 shadow-sm">
-                  <p className="font-medium text-ink">備用{item.tradePlan.alternateSetup.side}劇本</p>
-                  <p className="mt-2">{item.tradePlan.alternateSetup.summary}</p>
-                  <p className="mt-2">
-                    {item.tradePlan.alternateSetup.entry ? `${item.tradePlan.alternateSetup.entryLabel} ${item.tradePlan.alternateSetup.entry.price.toFixed(2)}，` : ''}
-                    {item.tradePlan.alternateSetup.exit ? `${item.tradePlan.alternateSetup.exitLabel} ${item.tradePlan.alternateSetup.exit.price.toFixed(2)}，` : ''}
-                    {item.tradePlan.alternateSetup.stopLoss ? `${item.tradePlan.alternateSetup.stopLabel} ${item.tradePlan.alternateSetup.stopLoss.price.toFixed(2)}。` : ''}
-                  </p>
-                </div>
-              ) : null}
-            </section>
+            <StockTradePlanPanel tradePlan={item.tradePlan} />
 
             <section className="glass-card rounded-[30px] p-6">
               <div className="flex items-end justify-between gap-4">

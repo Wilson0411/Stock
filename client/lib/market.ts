@@ -270,6 +270,8 @@ export type TradeLevel = {
   reasons: string[];
 };
 
+export type TradePlanVariantId = 'conservative' | 'aggressive';
+
 export type TradeSetup = {
   side: '做多' | '做空';
   summary: string;
@@ -282,7 +284,10 @@ export type TradeSetup = {
   riskRewardRatio: number | null;
 };
 
-export type TradePlan = {
+export type TradePlanVariant = {
+  id: TradePlanVariantId;
+  label: '保守版' | '積極版';
+  description: string;
   stance: '可進場' | '等待突破' | '只觀察' | '避免進場';
   preferredSide: '做多' | '做空' | '觀望';
   summary: string;
@@ -292,6 +297,11 @@ export type TradePlan = {
   riskRewardRatio: number | null;
   primarySetup: TradeSetup | null;
   alternateSetup: TradeSetup | null;
+};
+
+export type TradePlan = TradePlanVariant & {
+  defaultVariant: TradePlanVariantId;
+  variants: Record<TradePlanVariantId, TradePlanVariant>;
   dimensionAnalysis: {
     fundamental: string[];
     chip: string[];
@@ -592,6 +602,28 @@ function formatCurrency(value: number): string {
   }
 
   return `${Math.round(value).toLocaleString('zh-TW')}`;
+}
+
+function createEmptyTradePlanVariant(
+  id: TradePlanVariantId,
+  label: '保守版' | '積極版',
+  description: string,
+  summary: string
+): TradePlanVariant {
+  return {
+    id,
+    label,
+    description,
+    stance: '只觀察',
+    preferredSide: '觀望',
+    summary,
+    entry: null,
+    takeProfit: null,
+    stopLoss: null,
+    riskRewardRatio: null,
+    primarySetup: null,
+    alternateSetup: null
+  };
 }
 
 function formatCapital(value: number | null): string {
@@ -1474,15 +1506,12 @@ function scoreQuote(
     ruleFacts,
     ruleSignals,
     tradePlan: {
-      stance: '只觀察',
-      preferredSide: '觀望',
-      summary: '等待歷史與市況資料補齊後再評估進出場。',
-      entry: null,
-      takeProfit: null,
-      stopLoss: null,
-      riskRewardRatio: null,
-      primarySetup: null,
-      alternateSetup: null,
+      ...createEmptyTradePlanVariant('conservative', '保守版', '等突破與更多確認後再出手。', '等待歷史與市況資料補齊後再評估進出場。'),
+      defaultVariant: 'conservative',
+      variants: {
+        conservative: createEmptyTradePlanVariant('conservative', '保守版', '等突破與更多確認後再出手。', '等待歷史與市況資料補齊後再評估進出場。'),
+        aggressive: createEmptyTradePlanVariant('aggressive', '積極版', '可接受較早進場與較大波動。', '等待歷史與市況資料補齊後再評估進出場。')
+      },
       dimensionAnalysis: {
         fundamental: [],
         chip: [],
@@ -1766,124 +1795,149 @@ function buildTradePlan(item: StockRiskItem, history: PriceHistoryPoint[], marke
     (item.diagnostics.volatilityRank >= 0.92 ? 1 : 0);
   const marketAdjustment = marketPulse.stance === '偏多順風' ? 1 : marketPulse.stance === '偏空保守' ? -1 : 0;
   const compositeScore = fundamentalScore + chipScore + technicalScore + volumeScore + marketAdjustment;
+  function buildVariant(id: TradePlanVariantId): TradePlanVariant {
+    const label = id === 'conservative' ? '保守版' : '積極版';
+    const description = id === 'conservative' ? '等突破與更多確認後再出手。' : '可接受較早進場與較大波動。';
 
-  let stance: TradePlan['stance'] = '只觀察';
-  if (item.officialStatus === '處置') {
-    stance = '避免進場';
-  } else if (compositeScore >= 5 && item.riseProbability >= 56) {
-    stance = '可進場';
-  } else if (compositeScore >= 2) {
-    stance = '等待突破';
-  } else if (compositeScore <= 0) {
-    stance = '避免進場';
+    let stance: TradePlanVariant['stance'] = '只觀察';
+    if (item.officialStatus === '處置') {
+      stance = '避免進場';
+    } else if ((id === 'conservative' && compositeScore >= 5 && item.riseProbability >= 56) || (id === 'aggressive' && compositeScore >= 3 && item.riseProbability >= 52)) {
+      stance = '可進場';
+    } else if ((id === 'conservative' && compositeScore >= 2) || (id === 'aggressive' && compositeScore >= 0)) {
+      stance = '等待突破';
+    } else if ((id === 'conservative' && compositeScore <= 0) || (id === 'aggressive' && compositeScore <= -2)) {
+      stance = '避免進場';
+    }
+
+    if (eventPlan.phase === '快進處置' && stance === '可進場' && id === 'conservative') {
+      stance = '等待突破';
+    }
+
+    if (eventPlan.phase === '快進處置' && item.fallProbability >= (id === 'conservative' ? 55 : 62)) {
+      stance = '避免進場';
+    }
+
+    const longEntryPrice = round(id === 'conservative' ? Math.max(item.close * 1.008, resistance * 1.004) : Math.max(support * 1.003, item.close * 0.992));
+    const stopLossPrice = round(id === 'conservative' ? Math.min(support * 0.99, longEntryPrice * 0.975) : Math.min(support * 0.982, longEntryPrice * 0.968));
+    const targetPrice = round(id === 'conservative' ? Math.max(longEntryPrice * 1.055, resistance * 1.02) : Math.max(longEntryPrice * 1.08, resistance * 1.025));
+    const longRiskRewardRatio = longEntryPrice > stopLossPrice ? round((targetPrice - longEntryPrice) / Math.max(longEntryPrice - stopLossPrice, 0.01), 2) : null;
+
+    const shortEntryPrice = round(id === 'conservative' ? Math.min(item.close * 0.992, support * 0.995) : Math.min(item.close * 0.998, support * 0.999));
+    const shortCoverPrice = round(id === 'conservative' ? Math.min(shortEntryPrice * 0.94, support * 0.955) : Math.min(shortEntryPrice * 0.92, support * 0.945));
+    const shortStopPrice = round(id === 'conservative' ? Math.max(resistance * 1.01, shortEntryPrice * 1.028) : Math.max(resistance * 1.018, shortEntryPrice * 1.035));
+    const shortRiskRewardRatio = shortStopPrice > shortEntryPrice ? round((shortEntryPrice - shortCoverPrice) / Math.max(shortStopPrice - shortEntryPrice, 0.01), 2) : null;
+
+    const entryReasons = [
+      id === 'conservative'
+        ? `保守版進場會等更接近突破確認，先看 ${round(resistance).toFixed(2)} 壓力是否站穩，進場價抓在 ${longEntryPrice.toFixed(2)}。`
+        : `積極版進場會更貼近支撐，先看 ${round(support).toFixed(2)} 附近承接是否有效，進場價抓在 ${longEntryPrice.toFixed(2)}。`,
+      `籌碼面 ${chip[0] ?? '目前沒有明顯監理壓力。'}`,
+      `基本面 ${fundamental[0] ?? '暫無明顯正向催化。'}`,
+      `價量面 ${priceVolume[1] ?? '量價結構中性。'}`
+    ];
+
+    const takeProfitReasons = [
+      id === 'conservative'
+        ? `保守版停利先看近端壓力與可見延伸目標，出場價抓在 ${targetPrice.toFixed(2)}。`
+        : `積極版停利會預留較大的延伸空間，出場價抓在 ${targetPrice.toFixed(2)}。`,
+      '若接近目標區後量價延續不足，應優先分批落袋。',
+      `以目前設定估算，風險報酬比約 ${longRiskRewardRatio ?? '暫無'}。`
+    ];
+
+    const stopLossReasons = [
+      id === 'conservative'
+        ? `保守版停損設在 ${stopLossPrice.toFixed(2)}，跌回突破區下方就先認錯。`
+        : `積極版停損設在 ${stopLossPrice.toFixed(2)}，守不住近端支撐就先退場。`,
+      '若跌破後仍伴隨放量，代表價量轉弱，應先退場。',
+      `市況 ${marketPulse.stance} 時，支撐失守的修復速度通常較慢。`
+    ];
+
+    const shortEntryReasons = [
+      id === 'conservative'
+        ? `保守版做空會等支撐明確失守後再跟，空方進場價抓在 ${shortEntryPrice.toFixed(2)}。`
+        : `積極版做空會更早靠近支撐試單，空方進場價抓在 ${shortEntryPrice.toFixed(2)}。`,
+      `籌碼面 ${chip[0] ?? '短線資金有轉弱跡象。'}`,
+      `價量面 ${item.diagnostics.closeToLow >= 0.8 ? '收盤貼近日低，代表空方收盤前仍占優。' : '若收盤再度跌回支撐下方，空方延續性會更完整。'}`,
+      `事件面 ${eventPlan.summary}`
+    ];
+
+    const shortCoverReasons = [
+      `第一回補目標抓在 ${shortCoverPrice.toFixed(2)}，優先對應支撐跌破後的延伸跌幅。`,
+      '若跌到目標區但沒有再放量，可先分批回補，避免把空單抱成反彈。',
+      `以目前設定估算，空方風險報酬比約 ${shortRiskRewardRatio ?? '暫無'}。`
+    ];
+
+    const shortStopReasons = [
+      `空方停損價設在 ${shortStopPrice.toFixed(2)}，重新站回壓力帶代表空方劇本失效。`,
+      '若跌破支撐後又快速站回，通常是空方陷阱，應先撤退。',
+      `整體市況 ${marketPulse.stance} 時，偏多市況更不適合硬抱空單。`
+    ];
+
+    const summaryByStance: Record<TradePlanVariant['stance'], string> = {
+      可進場: id === 'conservative' ? '保守版已等到較多確認，可用較小部位沿突破方向進場。' : '積極版允許較早進場，可貼近支撐或失守點先試單。',
+      等待突破: eventPlan.phase === '快進處置' ? '事件仍在升溫，先等空方段落結束或重新站回壓力後再評估。' : '方向有機會，但仍需要站上壓力或等量價再確認。',
+      只觀察: id === 'conservative' ? '保守版下訊號仍不夠集中，先留在觀察名單。' : '積極版可先觀察，不急著把試單變成正式部位。',
+      避免進場: eventPlan.phase === '快進處置' ? '事件偏空段仍在進行，現階段不建議做多搶進。' : '監理、技術或市況條件不利，現階段不建議進場。'
+    };
+
+    const longSetup: TradeSetup = {
+      side: '做多',
+      summary: summaryByStance[stance],
+      entryLabel: '建議進場',
+      exitLabel: '建議停利',
+      stopLabel: '建議停損',
+      entry: stance === '避免進場' ? null : { price: longEntryPrice, reasons: entryReasons },
+      exit: stance === '避免進場' ? null : { price: targetPrice, reasons: takeProfitReasons },
+      stopLoss: stance === '避免進場' ? null : { price: stopLossPrice, reasons: stopLossReasons },
+      riskRewardRatio: longRiskRewardRatio
+    };
+
+    const shortSetup: TradeSetup | null = eventPlan.phase === '快進處置' || eventPlan.bias === '偏空事件段'
+      ? {
+          side: '做空',
+          summary: id === 'conservative' ? '保守版空方劇本以跌破支撐後跟隨為主。' : '積極版空方劇本可接受更早在支撐失守前後試單。',
+          entryLabel: '做空進場',
+          exitLabel: '回補目標',
+          stopLabel: '空方停損',
+          entry: { price: shortEntryPrice, reasons: shortEntryReasons },
+          exit: { price: shortCoverPrice, reasons: shortCoverReasons },
+          stopLoss: { price: shortStopPrice, reasons: shortStopReasons },
+          riskRewardRatio: shortRiskRewardRatio
+        }
+      : null;
+
+    const preferredSide: TradePlanVariant['preferredSide'] = shortSetup ? '做空' : stance === '避免進場' ? '觀望' : '做多';
+    const primarySetup = preferredSide === '做空' ? shortSetup : stance === '避免進場' ? null : longSetup;
+    const alternateSetup = preferredSide === '做空' ? (stance === '避免進場' ? null : longSetup) : shortSetup;
+    const primarySummary = primarySetup?.summary ?? summaryByStance[stance];
+
+    return {
+      id,
+      label,
+      description,
+      stance,
+      preferredSide,
+      summary: primarySummary,
+      entry: primarySetup?.entry ?? null,
+      takeProfit: primarySetup?.exit ?? null,
+      stopLoss: primarySetup?.stopLoss ?? null,
+      riskRewardRatio: primarySetup?.riskRewardRatio ?? null,
+      primarySetup,
+      alternateSetup
+    };
   }
 
-  if (eventPlan.phase === '快進處置' && stance === '可進場') {
-    stance = '等待突破';
-  }
-
-  if (eventPlan.phase === '快進處置' && item.fallProbability >= 55) {
-    stance = '避免進場';
-  }
-
-  const conservativeEntry = Math.max(support * 1.01, item.close * 0.985);
-  const breakoutEntry = Math.max(item.close * 1.005, resistance * 1.003);
-  const entryPrice = round(stance === '可進場' ? conservativeEntry : breakoutEntry);
-  const stopLossPrice = round(Math.min(support * 0.985, entryPrice * 0.97));
-  const targetPrice = round(Math.max(entryPrice * 1.06, resistance * 1.03));
-  const longRiskRewardRatio = entryPrice > stopLossPrice ? round((targetPrice - entryPrice) / Math.max(entryPrice - stopLossPrice, 0.01), 2) : null;
-
-  const shortEntryPrice = round(Math.min(item.close * 0.995, support * 0.997));
-  const shortCoverPrice = round(Math.min(shortEntryPrice * 0.93, support * 0.95));
-  const shortStopPrice = round(Math.max(resistance * 1.015, shortEntryPrice * 1.03));
-  const shortRiskRewardRatio = shortStopPrice > shortEntryPrice ? round((shortEntryPrice - shortCoverPrice) / Math.max(shortStopPrice - shortEntryPrice, 0.01), 2) : null;
-
-  const entryReasons = [
-    `技術面以 ${round(support).toFixed(2)} 附近做短線支撐，進場價抓在 ${entryPrice.toFixed(2)} 比較能貼近風險界線。`,
-    `籌碼面 ${chip[0] ?? '目前沒有明顯監理壓力。'}`,
-    `基本面 ${fundamental[0] ?? '暫無明顯正向催化。'}`,
-    `價量面 ${priceVolume[1] ?? '量價結構中性。'}`
-  ];
-
-  const takeProfitReasons = [
-    `技術面先看近 20 日壓力與延伸目標，出場價抓在 ${targetPrice.toFixed(2)}。`,
-    `若突破後量價延續不足，接近壓力區應優先分批落袋。`,
-    `以目前設定估算，風險報酬比約 ${longRiskRewardRatio ?? '暫無'}。`
-  ];
-
-  const stopLossReasons = [
-    `停損價 ${stopLossPrice.toFixed(2)} 低於近端支撐，跌破代表技術假設失效。`,
-    `若跌破後仍伴隨放量，代表價量轉弱，應先退場。`,
-    `市況 ${marketPulse.stance} 時，支撐失守的修復速度通常較慢。`
-  ];
-
-  const shortEntryReasons = [
-    `技術面先看 ${round(support).toFixed(2)} 支撐是否失守，做空進場價抓在 ${shortEntryPrice.toFixed(2)}，代表跌破後再跟。`,
-    `籌碼面 ${chip[0] ?? '短線資金有轉弱跡象。'}`,
-    `價量面 ${item.diagnostics.closeToLow >= 0.8 ? '收盤貼近日低，代表空方收盤前仍占優。' : '若收盤再度跌回支撐下方，空方延續性會更完整。'}`,
-    `事件面 ${eventPlan.summary}`
-  ];
-
-  const shortCoverReasons = [
-    `第一回補目標抓在 ${shortCoverPrice.toFixed(2)}，優先對應支撐跌破後的延伸跌幅。`,
-    '若跌到目標區但沒有再放量，可先分批回補，避免把空單抱成反彈。',
-    `以目前設定估算，空方風險報酬比約 ${shortRiskRewardRatio ?? '暫無'}。`
-  ];
-
-  const shortStopReasons = [
-    `空方停損價設在 ${shortStopPrice.toFixed(2)}，重新站回壓力帶代表空方劇本失效。`,
-    '若跌破支撐後又快速站回，通常是空方陷阱，應先撤退。',
-    `整體市況 ${marketPulse.stance} 時，偏多市況更不適合硬抱空單。`
-  ];
-
-  const summaryByStance: Record<TradePlan['stance'], string> = {
-    可進場: '四面向分數偏正向，可用貼近支撐的方式嘗試小部位進場。',
-    等待突破: eventPlan.phase === '快進處置' ? '事件仍在升溫，先等空方段落結束或重新站回壓力後再評估。' : '方向有機會，但仍需要站上壓力或等量價再確認。',
-    只觀察: '目前訊號不夠集中，保留在觀察名單即可。',
-    避免進場: eventPlan.phase === '快進處置' ? '事件偏空段仍在進行，現階段不建議做多搶進。' : '監理、技術或市況條件不利，現階段不建議進場。'
-  };
-
-  const longSetup: TradeSetup = {
-    side: '做多',
-    summary: summaryByStance[stance],
-    entryLabel: '建議進場',
-    exitLabel: '建議停利',
-    stopLabel: '建議停損',
-    entry: stance === '避免進場' ? null : { price: entryPrice, reasons: entryReasons },
-    exit: stance === '避免進場' ? null : { price: targetPrice, reasons: takeProfitReasons },
-    stopLoss: stance === '避免進場' ? null : { price: stopLossPrice, reasons: stopLossReasons },
-    riskRewardRatio: longRiskRewardRatio
-  };
-
-  const shortSetup: TradeSetup | null = eventPlan.phase === '快進處置' || eventPlan.bias === '偏空事件段'
-    ? {
-        side: '做空',
-        summary: '空方劇本以跌破支撐後跟隨為主，不預設在強勢鎖漲停時硬空。',
-        entryLabel: '做空進場',
-        exitLabel: '回補目標',
-        stopLabel: '空方停損',
-        entry: { price: shortEntryPrice, reasons: shortEntryReasons },
-        exit: { price: shortCoverPrice, reasons: shortCoverReasons },
-        stopLoss: { price: shortStopPrice, reasons: shortStopReasons },
-        riskRewardRatio: shortRiskRewardRatio
-      }
-    : null;
-
-  const preferredSide: TradePlan['preferredSide'] = shortSetup ? '做空' : stance === '避免進場' ? '觀望' : '做多';
-  const primarySetup = preferredSide === '做空' ? shortSetup : stance === '避免進場' ? null : longSetup;
-  const alternateSetup = preferredSide === '做空' ? (stance === '避免進場' ? null : longSetup) : shortSetup;
-  const primarySummary = primarySetup?.summary ?? summaryByStance[stance];
+  const conservativeVariant = buildVariant('conservative');
+  const aggressiveVariant = buildVariant('aggressive');
 
   return {
-    stance,
-    preferredSide,
-    summary: primarySummary,
-    entry: primarySetup?.entry ?? null,
-    takeProfit: primarySetup?.exit ?? null,
-    stopLoss: primarySetup?.stopLoss ?? null,
-    riskRewardRatio: primarySetup?.riskRewardRatio ?? null,
-    primarySetup,
-    alternateSetup,
+    ...conservativeVariant,
+    defaultVariant: 'conservative',
+    variants: {
+      conservative: conservativeVariant,
+      aggressive: aggressiveVariant
+    },
     dimensionAnalysis: {
       fundamental,
       chip,
