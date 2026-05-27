@@ -4,10 +4,16 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 
+import MetricDisclosure from '@/components/metric-disclosure';
 import type { MarketSnapshot, PriceHistoryPoint, StockRiskItem, TradeLevel } from '@/lib/market';
 
 const WATCHLIST_STORAGE_KEY = 'stock-risk-watchlist';
 type RuleCategory = StockRiskItem['ruleSignals'][number]['category'];
+type MetricHelpCopy = {
+  source: string;
+  calculation: string;
+  note?: string;
+};
 
 function formatSigned(value: number): string {
   if (value > 0) {
@@ -56,14 +62,113 @@ function ruleSignalScore(item: StockRiskItem): number {
   }, 0);
 }
 
-function StatCard({ label, value, helper }: { label: string; value: string; helper: string }) {
+function homeMetricHelp(key: string): MetricHelpCopy {
+  switch (key) {
+    case 'overview.totalUniverse':
+      return {
+        source: 'TWSE STOCK_DAY_ALL，並且目前只保留上市股票。',
+        calculation: '把納入模型評分的上市股票筆數直接計數，也就是 scored.length。',
+        note: '這不是加權指數成分股數，而是目前這個雷達頁面實際掃描的上市股票總數。'
+      };
+    case 'overview.fastTrackCount':
+      return {
+        source: 'TWSE 行情、官方公告與規則訊號，再經事件階段判定。',
+        calculation: '把 searchPool 中 eventPlan.phase 等於「快進處置」的股票數量直接計數。'
+      };
+    case 'overview.disposedCount':
+      return {
+        source: 'TWSE 行情、官方公告與規則訊號，再經事件階段判定。',
+        calculation: '把 searchPool 中 eventPlan.phase 等於「已進處置」的股票數量直接計數。'
+      };
+    case 'overview.officialHitCount':
+      return {
+        source: 'TWSE notice、notetrans、punish 等官方公告端點。',
+        calculation: '在首頁前段候選池中，統計 officialStatus 不等於「模型觀察」的股票數量。'
+      };
+    case 'overview.medianDispositionProbability':
+      return {
+        source: 'TWSE 行情、官方公告、重大訊息、融資融券、除權息與當沖限制等資料。',
+        calculation: '把全部股票的進處置機率排序後取中位數，代表整體市場的風險中間值。'
+      };
+    case 'quote.close':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的收盤價欄位。',
+        calculation: '直接使用交易所當日收盤價，不另外推估。'
+      };
+    case 'quote.changePct':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的收盤價與漲跌價差。',
+        calculation: '先用 previousClose = close - change 還原前一日收盤，再用 (change / previousClose) * 100 算出漲跌幅。'
+      };
+    case 'quote.tradeValue':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的 TradeValue。',
+        calculation: '直接顯示當日成交金額，畫面上只做億 / 萬的單位縮寫。'
+      };
+    case 'quote.volume':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的 TradeVolume。',
+        calculation: '直接顯示當日成交量，畫面上只做億 / 萬的單位縮寫。'
+      };
+    case 'quote.trend7dPct':
+      return {
+        source: 'Yahoo Finance 日線資料。',
+        calculation: '取最近 7 個交易日收盤價，用 (最後一天收盤 - 第一天收盤) / 第一天收盤 * 100 算出 7 日變動。'
+      };
+    case 'quote.probabilities':
+      return {
+        source: 'TWSE 行情、官方公告與規則訊號，經 scoreQuote 啟發式模型整合。',
+        calculation: '先算 riseSignal 與 fallSignal，再正規化成上漲機率；下跌機率則用 100 減去上漲機率。',
+        note: '這是模型分數，不是未來報酬率保證。'
+      };
+    case 'quote.dispositionProbability':
+      return {
+        source: 'TWSE 行情、官方公告、重大訊息、融資融券、除權息與當沖限制。',
+        calculation: '用波動、成交熱度、接近漲跌停、收盤位置、成交筆數與官方公告加權後，轉成 0 至 100 的進處置機率。',
+        note: '若官方已列入注意或處置，模型會強制把分數抬到較高區間。'
+      };
+    case 'quote.officialAnnouncementCount':
+      return {
+        source: 'TWSE notice、notetrans、punish 等官方公告端點。',
+        calculation: '把該股票最近命中的官方公告筆數彙整後直接顯示。'
+      };
+    case 'trade.riskRewardRatio':
+      return {
+        source: '交易計畫模型中的進場、停利、停損價位。',
+        calculation: '做多用 (停利 - 進場) / (進場 - 停損)；做空用 (進場 - 回補) / (停損 - 進場)，衡量每承擔 1 單位風險可交換的報酬。'
+      };
+    case 'market.advancersDecliners':
+      return {
+        source: '全部納入市場脈動統計的上市股票當日漲跌幅。',
+        calculation: '漲跌幅大於 0 算上漲家數，小於 0 算下跌家數，其餘為平盤。'
+      };
+    default:
+      return {
+        source: 'TWSE 公開資料與模型整理結果。',
+        calculation: '依照頁面對應欄位直接顯示或以既有模型公式換算。'
+      };
+  }
+}
+
+function StatCard({ label, value, helper, help }: { label: string; value: string; helper: string; help: MetricHelpCopy }) {
   return (
-    <div className="glass-card overflow-hidden rounded-[28px] p-5">
-      <div className="mb-4 h-1.5 w-16 rounded-full bg-[linear-gradient(90deg,#12354a,#e07a2d)]" />
-      <p className="text-sm uppercase tracking-[0.28em] text-tide/60">{label}</p>
-      <p className="numeric mt-3 text-3xl font-semibold text-ink">{value}</p>
-      <p className="mt-2 text-sm text-ink/65">{helper}</p>
-    </div>
+    <MetricDisclosure
+      className="glass-card overflow-hidden rounded-[28px] p-5"
+      source={help.source}
+      calculation={help.calculation}
+      note={help.note}
+      summary={
+        <>
+          <div className="mb-4 h-1.5 w-16 rounded-full bg-[linear-gradient(90deg,#12354a,#e07a2d)]" />
+          <div className="flex items-center gap-2">
+            <p className="text-sm uppercase tracking-[0.28em] text-tide/60">{label}</p>
+            <span className="metric-help-button rounded-full px-2 py-0.5 text-[11px] font-medium">說明</span>
+          </div>
+          <p className="numeric mt-3 text-3xl font-semibold text-ink">{value}</p>
+          <p className="mt-2 text-sm text-ink/65">{helper}</p>
+        </>
+      }
+    />
   );
 }
 
@@ -81,18 +186,26 @@ function freshnessTone(value: MarketSnapshot['dataFreshness'][number]['freshness
 
 function ProbabilityBar({ rise, fall }: { rise: number; fall: number }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-ink/65">
-        <span>上漲 {rise}%</span>
-        <span>下跌 {fall}%</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-ink/10">
-        <div className="flex h-full">
-          <div className="bg-mint" style={{ width: `${rise}%` }} />
-          <div className="bg-rose" style={{ width: `${fall}%` }} />
+    <MetricDisclosure
+      className="rounded-[20px] px-3 py-2"
+      source={homeMetricHelp('quote.probabilities').source}
+      calculation={homeMetricHelp('quote.probabilities').calculation}
+      note={homeMetricHelp('quote.probabilities').note}
+      summary={
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-ink/65">
+            <span>上漲 {rise}%</span>
+            <span>下跌 {fall}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-ink/10">
+            <div className="flex h-full">
+              <div className="bg-mint" style={{ width: `${rise}%` }} />
+              <div className="bg-rose" style={{ width: `${fall}%` }} />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
@@ -205,6 +318,14 @@ function PriceHint({ label, level }: { label: string; level: TradeLevel | null }
             {reason}
           </p>
         ))}
+        <p>
+          <span className="font-medium text-ink">資料來源: </span>
+          Yahoo Finance 日線歷史、TWSE 當日行情與模型交易計畫。
+        </p>
+        <p>
+          <span className="font-medium text-ink">計算方式: </span>
+          價位來自 buildTradePlan，會根據近期支撐/壓力、事件階段與主劇本方向推導建議進場、停利或停損位置。
+        </p>
       </div>
     </details>
   );
@@ -252,16 +373,39 @@ function CandidateCard({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <div>
-            <p className="numeric text-2xl font-semibold text-ink">{item.close.toFixed(2)}</p>
-            <p className={`numeric mt-1 text-sm font-medium ${changeClass}`}>
-              {formatSigned(item.change)} / {formatPercentage(item.changePct)}
-            </p>
-          </div>
+          <MetricDisclosure
+            className="rounded-[22px] px-3 py-2"
+            source={homeMetricHelp('quote.close').source}
+            calculation={homeMetricHelp('quote.changePct').calculation}
+            note="收盤價與當日漲跌幅都直接取自當日行情，再把漲跌價差換算成百分比顯示。"
+            summary={
+              <div>
+                <p className="numeric text-2xl font-semibold text-ink">{item.close.toFixed(2)}</p>
+                <p className={`numeric mt-1 text-sm font-medium ${changeClass}`}>
+                  {formatSigned(item.change)} / {formatPercentage(item.changePct)}
+                </p>
+              </div>
+            }
+          />
           <div className="grid gap-2 text-xs text-ink/70 sm:grid-cols-3">
-            <span className="metric-tile rounded-2xl px-3 py-2">成交金額 {formatLargeNumber(item.tradeValue)}</span>
-            <span className="metric-tile rounded-2xl px-3 py-2">成交量 {formatLargeNumber(item.volume)}</span>
-            <span className="metric-tile rounded-2xl px-3 py-2">7 日 {formatPercentage(item.trend7dPct)}</span>
+            <MetricDisclosure
+              className="metric-tile rounded-2xl px-3 py-2"
+              source={homeMetricHelp('quote.tradeValue').source}
+              calculation={homeMetricHelp('quote.tradeValue').calculation}
+              summary={<span>成交金額 {formatLargeNumber(item.tradeValue)}</span>}
+            />
+            <MetricDisclosure
+              className="metric-tile rounded-2xl px-3 py-2"
+              source={homeMetricHelp('quote.volume').source}
+              calculation={homeMetricHelp('quote.volume').calculation}
+              summary={<span>成交量 {formatLargeNumber(item.volume)}</span>}
+            />
+            <MetricDisclosure
+              className="metric-tile rounded-2xl px-3 py-2"
+              source={homeMetricHelp('quote.trend7dPct').source}
+              calculation={homeMetricHelp('quote.trend7dPct').calculation}
+              summary={<span>7 日 {formatPercentage(item.trend7dPct)}</span>}
+            />
           </div>
         </div>
 
@@ -273,11 +417,18 @@ function CandidateCard({
           <PriceHint label={item.tradePlan.primarySetup?.stopLabel ?? '建議停損'} level={item.tradePlan.stopLoss} />
         </div>
 
-        <p className="rounded-2xl bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-3 text-sm text-white/84 shadow-lg">
-          {item.tradePlan.preferredSide !== '觀望' ? `${item.tradePlan.preferredSide}主劇本: ` : ''}
-          {item.tradePlan.summary}
-          {item.tradePlan.riskRewardRatio !== null ? ` 風險報酬比約 ${item.tradePlan.riskRewardRatio}。` : ''}
-        </p>
+        <MetricDisclosure
+          className="rounded-2xl bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-3 text-sm text-white/84 shadow-lg"
+          source={homeMetricHelp('trade.riskRewardRatio').source}
+          calculation={homeMetricHelp('trade.riskRewardRatio').calculation}
+          summary={
+            <p>
+              {item.tradePlan.preferredSide !== '觀望' ? `${item.tradePlan.preferredSide}主劇本: ` : ''}
+              {item.tradePlan.summary}
+              {item.tradePlan.riskRewardRatio !== null ? ` 風險報酬比約 ${item.tradePlan.riskRewardRatio}。` : ''}
+            </p>
+          }
+        />
 
         <div className="rounded-[24px] border border-ink/8 bg-white/82 px-4 py-4 text-sm text-ink/72 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
@@ -311,15 +462,30 @@ function CandidateCard({
       </div>
 
       <div className="flex flex-col justify-between gap-4 rounded-[24px] bg-[linear-gradient(180deg,#08131b,#12354a)] px-5 py-5 text-white shadow-lg">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/60">進處置機率</p>
-          <p className="numeric mt-3 text-4xl font-semibold">{item.dispositionProbability}%</p>
-        </div>
+        <MetricDisclosure
+          className="rounded-[20px] px-2 py-1"
+          source={homeMetricHelp('quote.dispositionProbability').source}
+          calculation={homeMetricHelp('quote.dispositionProbability').calculation}
+          note={homeMetricHelp('quote.dispositionProbability').note}
+          summary={
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-white/60">進處置機率</p>
+              <p className="numeric mt-3 text-4xl font-semibold">{item.dispositionProbability}%</p>
+            </div>
+          }
+        />
         <div className="grid grid-cols-2 gap-3 text-sm text-white/75">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/55">官方公告</p>
-            <p className="mt-1">{item.officialAnnouncementCount || 0} 筆</p>
-          </div>
+          <MetricDisclosure
+            className="rounded-[18px] px-2 py-1"
+            source={homeMetricHelp('quote.officialAnnouncementCount').source}
+            calculation={homeMetricHelp('quote.officialAnnouncementCount').calculation}
+            summary={
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/55">官方公告</p>
+                <p className="mt-1">{item.officialAnnouncementCount || 0} 筆</p>
+              </div>
+            }
+          />
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-white/55">產業</p>
             <p className="mt-1">{item.industry}</p>
@@ -347,7 +513,7 @@ function CompactList({
   items: StockRiskItem[];
   tone: 'bull' | 'bear';
 }) {
-  const accent = tone === 'bull' ? 'bg-mint/20 text-emerald-800' : 'bg-rose/20 text-rose-800';
+  const accent = tone === 'bull' ? 'badge-positive' : 'badge-danger';
 
   return (
     <section className="glass-card rounded-[30px] p-6">
@@ -370,9 +536,13 @@ function CompactList({
                 </div>
                 <p className="mt-1 text-sm text-ink/60">{item.industry} / {item.momentumLabel}</p>
               </div>
-              <span className={`rounded-full px-3 py-1 text-sm font-medium ${accent}`}>
-                {tone === 'bull' ? `上漲 ${item.riseProbability}%` : `下跌 ${item.fallProbability}%`}
-              </span>
+              <MetricDisclosure
+                className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${accent}`}
+                source={homeMetricHelp('quote.probabilities').source}
+                calculation={homeMetricHelp('quote.probabilities').calculation}
+                note={homeMetricHelp('quote.probabilities').note}
+                summary={<span>{tone === 'bull' ? `上漲 ${item.riseProbability}%` : `下跌 ${item.fallProbability}%`}</span>}
+              />
             </div>
           </Link>
         ))}
@@ -669,14 +839,15 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
         </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="上市股票" value={`${snapshot.overview.totalUniverse}`} helper="不再顯示上櫃股票" />
-          <StatCard label="快進處置" value={`${snapshot.overview.fastTrackCount}`} helper="注意股或逼近處置段的偏空事件名單" />
-          <StatCard label="已進處置" value={`${snapshot.overview.disposedCount}`} helper="優先等止跌再看反彈的名單" />
-          <StatCard label="官方命中" value={`${snapshot.overview.officialHitCount}`} helper="前段候選池中已落在官方公告的股票數量" />
+          <StatCard label="上市股票" value={`${snapshot.overview.totalUniverse}`} helper="不再顯示上櫃股票" help={homeMetricHelp('overview.totalUniverse')} />
+          <StatCard label="快進處置" value={`${snapshot.overview.fastTrackCount}`} helper="注意股或逼近處置段的偏空事件名單" help={homeMetricHelp('overview.fastTrackCount')} />
+          <StatCard label="已進處置" value={`${snapshot.overview.disposedCount}`} helper="優先等止跌再看反彈的名單" help={homeMetricHelp('overview.disposedCount')} />
+          <StatCard label="官方命中" value={`${snapshot.overview.officialHitCount}`} helper="前段候選池中已落在官方公告的股票數量" help={homeMetricHelp('overview.officialHitCount')} />
           <StatCard
             label="中位風險"
             value={`${snapshot.overview.medianDispositionProbability}%`}
             helper={`官方注意 ${snapshot.overview.officialNoticeCount} 檔 / 處置 ${snapshot.overview.officialDispositionCount} 檔`}
+            help={homeMetricHelp('overview.medianDispositionProbability')}
           />
         </section>
 
@@ -710,10 +881,20 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
               </div>
               <p className="mt-3 text-sm leading-7 text-ink/72">{snapshot.marketPulse.summary}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">上漲 / 下跌</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{snapshot.marketPulse.advancers} / {snapshot.marketPulse.decliners}</p>
-                </div>
+                <MetricDisclosure
+                  className="metric-tile rounded-[22px] px-4 py-4"
+                  source={homeMetricHelp('market.advancersDecliners').source}
+                  calculation={homeMetricHelp('market.advancersDecliners').calculation}
+                  summary={
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-ink/60">上漲 / 下跌</p>
+                        <span className="metric-help-button rounded-full px-2 py-0.5 text-[11px] font-medium">說明</span>
+                      </div>
+                      <p className="numeric mt-2 text-2xl font-semibold text-ink">{snapshot.marketPulse.advancers} / {snapshot.marketPulse.decliners}</p>
+                    </div>
+                  }
+                />
                 <MarketDefinitionCard
                   label="平均日變動"
                   value={`${snapshot.marketPulse.averageChangePct}%`}
@@ -748,7 +929,12 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                 </div>
                 <p className="mt-1 text-sm text-ink/60">這一段先看偏空劇本，不做多方搶進。</p>
               </div>
-              <span className="badge-warning rounded-full px-3 py-2 text-sm font-medium">偏空事件段</span>
+              <MetricDisclosure
+                className="badge-warning inline-block rounded-full px-3 py-2 text-sm font-medium"
+                source="事件時間軸模型輸出，根據官方狀態、近端歷史支撐壓力與多空機率判定。"
+                calculation="快進處置表示仍在逼近處置前的偏空事件段，這裡先看失守支撐後的空方劇本。"
+                summary={<span>偏空事件段</span>}
+              />
             </div>
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.fastTrack.length > 0 ? (
@@ -762,7 +948,13 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                         </div>
                         <p className="mt-1 text-sm text-ink/60">{item.eventPlan.summary}</p>
                       </div>
-                      <span className="badge-danger rounded-full px-3 py-1 text-sm font-medium">下跌 {item.fallProbability}%</span>
+                      <MetricDisclosure
+                        className="badge-danger inline-block rounded-full px-3 py-1 text-sm font-medium"
+                        source={homeMetricHelp('quote.probabilities').source}
+                        calculation={homeMetricHelp('quote.probabilities').calculation}
+                        note={homeMetricHelp('quote.probabilities').note}
+                        summary={<span>下跌 {item.fallProbability}%</span>}
+                      />
                     </div>
                   </Link>
                 ))
@@ -780,7 +972,12 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                 </div>
                 <p className="mt-1 text-sm text-ink/60">這一段不追空，改看止跌與反彈確認。</p>
               </div>
-              <span className="badge-positive rounded-full px-3 py-2 text-sm font-medium">偏多事件段</span>
+              <MetricDisclosure
+                className="badge-positive inline-block rounded-full px-3 py-2 text-sm font-medium"
+                source="事件時間軸模型輸出，根據官方狀態、近端歷史支撐壓力與多空機率判定。"
+                calculation="已進處置後若急跌後進入止穩反彈觀察區，首頁會把它標成偏多事件段。"
+                summary={<span>偏多事件段</span>}
+              />
             </div>
             <div className="mt-5 space-y-3">
               {snapshot.eventBoards.disposed.length > 0 ? (
@@ -794,7 +991,13 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
                         </div>
                         <p className="mt-1 text-sm text-ink/60">{item.eventPlan.summary}</p>
                       </div>
-                      <span className="badge-positive rounded-full px-3 py-1 text-sm font-medium">上漲 {item.riseProbability}%</span>
+                      <MetricDisclosure
+                        className="badge-positive inline-block rounded-full px-3 py-1 text-sm font-medium"
+                        source={homeMetricHelp('quote.probabilities').source}
+                        calculation={homeMetricHelp('quote.probabilities').calculation}
+                        note={homeMetricHelp('quote.probabilities').note}
+                        summary={<span>上漲 {item.riseProbability}%</span>}
+                      />
                     </div>
                   </Link>
                 ))

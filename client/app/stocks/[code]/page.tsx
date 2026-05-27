@@ -1,10 +1,103 @@
 import { notFound } from 'next/navigation';
 
 import BackToDashboardButton from '@/components/back-to-dashboard-button';
+import MetricDisclosure from '@/components/metric-disclosure';
 import { getStockDetail } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
 export const preferredRegion = 'hnd1';
+
+type MetricHelpCopy = {
+  source: string;
+  calculation: string;
+  note?: string;
+};
+
+function stockMetricHelp(key: string): MetricHelpCopy {
+  switch (key) {
+    case 'quote.close':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的收盤價欄位。',
+        calculation: '直接顯示當日收盤價，不另外推估。'
+      };
+    case 'quote.changePct':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的漲跌價差與收盤價。',
+        calculation: '以 previousClose = close - change 還原前收，再用 (change / previousClose) * 100 算出單日漲跌幅。'
+      };
+    case 'quote.dispositionProbability':
+      return {
+        source: 'TWSE 行情、官方公告、重大訊息、融資融券、除權息與當沖限制。',
+        calculation: '以波動、熱度、漲跌停壓力、成交筆數與公告訊號加權後，轉成 0 到 100 的進處置機率。',
+        note: '官方已列入注意或處置時，模型會把分數抬高到對應區間。'
+      };
+    case 'quote.probabilities':
+      return {
+        source: 'TWSE 行情與官方/制度訊號，經 scoreQuote 模型整合。',
+        calculation: '先計算 riseSignal 與 fallSignal，再正規化成上漲機率，下跌機率用 100 減去上漲機率。'
+      };
+    case 'quote.tradeValue':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的 TradeValue。',
+        calculation: '直接顯示當日成交金額，畫面只做億 / 萬單位縮寫。'
+      };
+    case 'quote.volume':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的 TradeVolume。',
+        calculation: '直接顯示當日成交量，畫面只做億 / 萬單位縮寫。'
+      };
+    case 'history.points':
+      return {
+        source: 'Yahoo Finance 日線歷史資料。',
+        calculation: '個股頁先抓近 3 個月日線，再只顯示最後 30 筆交易日。'
+      };
+    case 'quote.trend7dPct':
+      return {
+        source: 'Yahoo Finance 日線資料。',
+        calculation: '取最近 7 個交易日收盤價，用 (最後一天 - 第一天) / 第一天 * 100 算出近 7 日變動。'
+      };
+    case 'quote.transactionCount':
+      return {
+        source: 'TWSE STOCK_DAY_ALL 的 Transaction。',
+        calculation: '直接顯示當日成交筆數，不做推估。'
+      };
+    case 'trade.priceLevel':
+      return {
+        source: 'TWSE 當日行情、Yahoo 歷史走勢與 buildTradePlan 交易計畫模型。',
+        calculation: '依支撐/壓力、事件階段、主劇本方向與市況，推導建議進場、停利、停損價位。'
+      };
+    case 'trade.riskRewardRatio':
+      return {
+        source: '交易計畫模型中的 entry / target / stop 價位。',
+        calculation: '做多用 (停利 - 進場) / (進場 - 停損)；做空用 (進場 - 回補) / (停損 - 進場)。'
+      };
+    case 'company.paidInCapital':
+      return {
+        source: 'TWSE t187ap03_L 公司基本資料。',
+        calculation: '直接顯示實收資本額，畫面只做億 / 萬單位縮寫。'
+      };
+    case 'official.announcementCount':
+      return {
+        source: 'TWSE notice、notetrans、punish 等官方公告端點。',
+        calculation: '把該股票最近命中的官方公告筆數彙整後直接顯示。'
+      };
+    case 'rules.marginUsage':
+      return {
+        source: 'TWSE MI_MARGN。',
+        calculation: '直接顯示模型整理後的融資使用率與融券使用率百分比。'
+      };
+    case 'rules.materialInfoCount':
+      return {
+        source: 'TWSE t187ap04_L。',
+        calculation: '統計近期重大訊息筆數，並顯示最新一筆主旨。'
+      };
+    default:
+      return {
+        source: 'TWSE、Yahoo Finance 與模型整理結果。',
+        calculation: '依欄位對應資料直接顯示，或由既有模型公式換算。'
+      };
+  }
+}
 
 function freshnessTone(value: '近即時' | '公告批次' | '定期更新' | '月更' | '日線更新'): string {
   if (value === '近即時') {
@@ -51,6 +144,14 @@ function PriceHint({ label, value, reasons }: { label: string; value: number | n
             {reason}
           </p>
         ))}
+        <p>
+          <span className="font-medium text-ink">資料來源: </span>
+          {stockMetricHelp('trade.priceLevel').source}
+        </p>
+        <p>
+          <span className="font-medium text-ink">計算方式: </span>
+          {stockMetricHelp('trade.priceLevel').calculation}
+        </p>
       </div>
     </details>
   );
@@ -190,10 +291,17 @@ export default async function StockDetailPage({ params }: { params: { code: stri
               </div>
               <h1 className="mt-4 text-3xl font-semibold md:text-5xl">{item.name}</h1>
               <p className="numeric mt-2 text-lg text-white/75">{item.code}</p>
-              <div className="mt-6 flex flex-wrap items-end gap-4">
-                <p className="numeric text-4xl font-semibold md:text-5xl">{item.close.toFixed(2)}</p>
-                <p className={`numeric text-lg font-medium ${changeClass}`}>{formatSigned(item.change)} / {formatPercent(item.changePct)}</p>
-              </div>
+              <MetricDisclosure
+                className="mt-6 inline-block rounded-[24px] px-2 py-1"
+                source={stockMetricHelp('quote.close').source}
+                calculation={stockMetricHelp('quote.changePct').calculation}
+                summary={
+                  <div className="flex flex-wrap items-end gap-4">
+                    <p className="numeric text-4xl font-semibold md:text-5xl">{item.close.toFixed(2)}</p>
+                    <p className={`numeric text-lg font-medium ${changeClass}`}>{formatSigned(item.change)} / {formatPercent(item.changePct)}</p>
+                  </div>
+                }
+              />
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/78">
                 這裡把個股的進處置風險、事件時間軸、近 30 筆歷史節奏、官方訊號與公司輪廓集中顯示，方便快速做二次判讀。
               </p>
@@ -211,26 +319,55 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                 <p className="text-xs uppercase tracking-[0.22em] text-white/55">資料時間</p>
                 <p className="mt-3 text-base text-white/85">{formatUpdatedAt(detail.updatedAt)}</p>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/55">進處置機率</p>
-                <p className="numeric mt-3 text-4xl font-semibold">{item.dispositionProbability}%</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/55">多空機率</p>
-                <p className="mt-3 text-base text-white/85">上漲 {item.riseProbability}% / 下跌 {item.fallProbability}%</p>
-              </div>
+              <MetricDisclosure
+                className="rounded-[18px] px-2 py-1"
+                source={stockMetricHelp('quote.dispositionProbability').source}
+                calculation={stockMetricHelp('quote.dispositionProbability').calculation}
+                note={stockMetricHelp('quote.dispositionProbability').note}
+                summary={
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/55">進處置機率</p>
+                    <p className="numeric mt-3 text-4xl font-semibold">{item.dispositionProbability}%</p>
+                  </div>
+                }
+              />
+              <MetricDisclosure
+                className="rounded-[18px] px-2 py-1"
+                source={stockMetricHelp('quote.probabilities').source}
+                calculation={stockMetricHelp('quote.probabilities').calculation}
+                summary={
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/55">多空機率</p>
+                    <p className="mt-3 text-base text-white/85">上漲 {item.riseProbability}% / 下跌 {item.fallProbability}%</p>
+                  </div>
+                }
+              />
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-white/55">交易判斷</p>
                 <p className="mt-3 text-base text-white/85">{item.tradePlan.preferredSide !== '觀望' ? `${item.tradePlan.preferredSide}主劇本: ` : ''}{item.tradePlan.summary}</p>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/55">成交金額</p>
-                <p className="mt-3 text-base text-white/85">{formatLargeNumber(item.tradeValue)}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-white/55">成交量</p>
-                <p className="mt-3 text-base text-white/85">{formatLargeNumber(item.volume)}</p>
-              </div>
+              <MetricDisclosure
+                className="rounded-[18px] px-2 py-1"
+                source={stockMetricHelp('quote.tradeValue').source}
+                calculation={stockMetricHelp('quote.tradeValue').calculation}
+                summary={
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/55">成交金額</p>
+                    <p className="mt-3 text-base text-white/85">{formatLargeNumber(item.tradeValue)}</p>
+                  </div>
+                }
+              />
+              <MetricDisclosure
+                className="rounded-[18px] px-2 py-1"
+                source={stockMetricHelp('quote.volume').source}
+                calculation={stockMetricHelp('quote.volume').calculation}
+                summary={
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/55">成交量</p>
+                    <p className="mt-3 text-base text-white/85">{formatLargeNumber(item.volume)}</p>
+                  </div>
+                }
+              />
             </div>
           </div>
         </section>
@@ -245,9 +382,12 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                 <PriceHint label={item.tradePlan.primarySetup?.exitLabel ?? '建議停利'} value={item.tradePlan.takeProfit?.price ?? null} reasons={item.tradePlan.takeProfit?.reasons ?? []} />
                 <PriceHint label={item.tradePlan.primarySetup?.stopLabel ?? '建議停損'} value={item.tradePlan.stopLoss?.price ?? null} reasons={item.tradePlan.stopLoss?.reasons ?? []} />
               </div>
-                <div className="content-wrap mt-4 rounded-[22px] bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-4 text-sm text-white/82 shadow-lg">
-                {item.tradePlan.riskRewardRatio !== null ? `${item.tradePlan.primarySetup?.side ?? '主劇本'}估算風險報酬比 ${item.tradePlan.riskRewardRatio}。` : '目前暫無可用的風險報酬比。'}
-              </div>
+              <MetricDisclosure
+                className="content-wrap mt-4 rounded-[22px] bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-4 text-sm text-white/82 shadow-lg"
+                source={stockMetricHelp('trade.riskRewardRatio').source}
+                calculation={stockMetricHelp('trade.riskRewardRatio').calculation}
+                summary={<p>{item.tradePlan.riskRewardRatio !== null ? `${item.tradePlan.primarySetup?.side ?? '主劇本'}估算風險報酬比 ${item.tradePlan.riskRewardRatio}。` : '目前暫無可用的風險報酬比。'}</p>}
+              />
               {item.tradePlan.alternateSetup ? (
                 <div className="content-wrap mt-4 rounded-[22px] border border-ink/8 bg-white/88 px-4 py-4 text-sm leading-7 text-ink/72 shadow-sm">
                   <p className="font-medium text-ink">備用{item.tradePlan.alternateSetup.side}劇本</p>
@@ -302,22 +442,33 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                   </div>
                   <p className="mt-1 text-sm text-ink/60">用較長的時間窗看波動是否持續升溫。</p>
                 </div>
-                <span className="soft-chip content-wrap rounded-full px-3 py-2 text-sm text-ink/70">{displayedHistory.length} 筆</span>
+                <MetricDisclosure
+                  className="soft-chip content-wrap inline-block rounded-full px-3 py-2 text-sm text-ink/70"
+                  source={stockMetricHelp('history.points').source}
+                  calculation={stockMetricHelp('history.points').calculation}
+                  summary={<span>{displayedHistory.length} 筆</span>}
+                />
               </div>
               <PriceTrend points={displayedHistory} />
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">近 7 日</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{formatPercent(item.trend7dPct)}</p>
-                </div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">單日變動</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{formatPercent(item.changePct)}</p>
-                </div>
-                <div className="metric-tile rounded-[22px] px-4 py-4">
-                  <p className="text-sm text-ink/60">成交筆數</p>
-                  <p className="numeric mt-2 text-2xl font-semibold text-ink">{item.transactionCount.toLocaleString('zh-TW')}</p>
-                </div>
+                <MetricDisclosure
+                  className="metric-tile rounded-[22px] px-4 py-4"
+                  source={stockMetricHelp('quote.trend7dPct').source}
+                  calculation={stockMetricHelp('quote.trend7dPct').calculation}
+                  summary={<div><p className="text-sm text-ink/60">近 7 日</p><p className="numeric mt-2 text-2xl font-semibold text-ink">{formatPercent(item.trend7dPct)}</p></div>}
+                />
+                <MetricDisclosure
+                  className="metric-tile rounded-[22px] px-4 py-4"
+                  source={stockMetricHelp('quote.changePct').source}
+                  calculation={stockMetricHelp('quote.changePct').calculation}
+                  summary={<div><p className="text-sm text-ink/60">單日變動</p><p className="numeric mt-2 text-2xl font-semibold text-ink">{formatPercent(item.changePct)}</p></div>}
+                />
+                <MetricDisclosure
+                  className="metric-tile rounded-[22px] px-4 py-4"
+                  source={stockMetricHelp('quote.transactionCount').source}
+                  calculation={stockMetricHelp('quote.transactionCount').calculation}
+                  summary={<div><p className="text-sm text-ink/60">成交筆數</p><p className="numeric mt-2 text-2xl font-semibold text-ink">{item.transactionCount.toLocaleString('zh-TW')}</p></div>}
+                />
               </div>
             </section>
 
@@ -367,7 +518,12 @@ export default async function StockDetailPage({ params }: { params: { code: stri
                 <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">發言人: {profile?.spokesperson ?? '暫無'}</div>
                 <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">總機電話: {profile?.phone ?? '暫無'}</div>
                 <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">地址: {profile?.address ?? '暫無'}</div>
-                <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">實收資本額: {profile ? formatLargeNumber(profile.paidInCapital ?? 0) : '暫無'}</div>
+                <MetricDisclosure
+                  className="metric-tile content-wrap rounded-[22px] px-4 py-4"
+                  source={stockMetricHelp('company.paidInCapital').source}
+                  calculation={stockMetricHelp('company.paidInCapital').calculation}
+                  summary={<span>實收資本額: {profile ? formatLargeNumber(profile.paidInCapital ?? 0) : '暫無'}</span>}
+                />
                 <div className="metric-tile content-wrap rounded-[22px] px-4 py-4">網站: {profile?.website ?? '暫無'}</div>
               </div>
             </section>
@@ -376,7 +532,12 @@ export default async function StockDetailPage({ params }: { params: { code: stri
               <h2 className="text-2xl font-semibold text-ink">官方訊號</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-ink/70">
                 <p className="soft-chip content-wrap rounded-2xl px-4 py-3">目前狀態: {item.officialStatus}</p>
-                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">公告筆數: {item.officialAnnouncementCount}</p>
+                <MetricDisclosure
+                  className="soft-chip content-wrap rounded-2xl px-4 py-3"
+                  source={stockMetricHelp('official.announcementCount').source}
+                  calculation={stockMetricHelp('official.announcementCount').calculation}
+                  summary={<span>公告筆數: {item.officialAnnouncementCount}</span>}
+                />
                 <p className="soft-chip content-wrap rounded-2xl px-4 py-3">補充說明: {item.officialReference ?? '目前沒有額外官方補充內容。'}</p>
               </div>
             </section>
@@ -385,8 +546,18 @@ export default async function StockDetailPage({ params }: { params: { code: stri
               <h2 className="text-2xl font-semibold text-ink">制度規則快照</h2>
               <div className="mt-4 space-y-3 text-sm leading-7 text-ink/70">
                 <p className="soft-chip content-wrap rounded-2xl px-4 py-3">除權息: {item.ruleFacts.exDividend.exDate ? `${item.ruleFacts.exDividend.exDate} ${item.ruleFacts.exDividend.kind ?? ''}` : '近期無事件窗'}</p>
-                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">融資使用率: {item.ruleFacts.marginShort.marginUsagePct !== null ? `${item.ruleFacts.marginShort.marginUsagePct}%` : '暫無'} / 融券使用率: {item.ruleFacts.marginShort.shortUsagePct !== null ? `${item.ruleFacts.marginShort.shortUsagePct}%` : '暫無'}</p>
-                <p className="soft-chip content-wrap rounded-2xl px-4 py-3">重大訊息: {item.ruleFacts.materialInfo.count > 0 ? `${item.ruleFacts.materialInfo.count} 筆，最新為 ${item.ruleFacts.materialInfo.latestTitle ?? '未提供'}` : '近期無重大訊息事件窗'}</p>
+                <MetricDisclosure
+                  className="soft-chip content-wrap rounded-2xl px-4 py-3"
+                  source={stockMetricHelp('rules.marginUsage').source}
+                  calculation={stockMetricHelp('rules.marginUsage').calculation}
+                  summary={<span>融資使用率: {item.ruleFacts.marginShort.marginUsagePct !== null ? `${item.ruleFacts.marginShort.marginUsagePct}%` : '暫無'} / 融券使用率: {item.ruleFacts.marginShort.shortUsagePct !== null ? `${item.ruleFacts.marginShort.shortUsagePct}%` : '暫無'}</span>}
+                />
+                <MetricDisclosure
+                  className="soft-chip content-wrap rounded-2xl px-4 py-3"
+                  source={stockMetricHelp('rules.materialInfoCount').source}
+                  calculation={stockMetricHelp('rules.materialInfoCount').calculation}
+                  summary={<span>重大訊息: {item.ruleFacts.materialInfo.count > 0 ? `${item.ruleFacts.materialInfo.count} 筆，最新為 ${item.ruleFacts.materialInfo.latestTitle ?? '未提供'}` : '近期無重大訊息事件窗'}</span>}
+                />
                 <p className="soft-chip content-wrap rounded-2xl px-4 py-3">當沖限制: {item.ruleFacts.dayTradeRestriction.active ? `${item.ruleFacts.dayTradeRestriction.kinds.join('、')}，至 ${item.ruleFacts.dayTradeRestriction.endDate ?? '未提供'}` : '目前無限制'}</p>
               </div>
             </section>
