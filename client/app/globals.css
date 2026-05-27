@@ -153,7 +153,7 @@ a {
 }
 
 .hint-card[open] {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgb(var(--panel-rgb) / 0.94);
 }
 
 .hint-card[open] .hint-summary {
@@ -161,22 +161,22 @@ a {
 }
 
 .soft-chip {
-  border: 1px solid rgba(11, 23, 32, 0.06);
+  border: 1px solid rgb(var(--line-rgb) / 0.12);
   background: rgb(var(--panel-soft-rgb) / 0.72);
 }
 
 .badge-live {
-  background: rgb(var(--mint-rgb) / 0.24);
+  background: rgb(var(--mint-rgb) / 0.32);
   color: #0d5c45;
 }
 
 .badge-batch {
-  background: rgb(var(--signal-rgb) / 0.24);
+  background: rgb(var(--signal-rgb) / 0.3);
   color: #7a3c07;
 }
 
 .badge-neutral {
-  background: rgb(var(--tide-rgb) / 0.14);
+  background: rgb(var(--tide-rgb) / 0.22);
   color: rgb(var(--tide-rgb) / 0.96);
 }
 
@@ -217,24 +217,24 @@ a {
 
 :root[data-theme='dark'] .badge-live,
 :root[data-theme='dark'] .badge-positive {
-  background: rgb(var(--mint-rgb) / 0.24);
-  color: rgb(224 255 245 / 0.96);
+  background: rgb(var(--mint-rgb) / 0.32);
+  color: #0d5c45;
 }
 
 :root[data-theme='dark'] .badge-batch,
 :root[data-theme='dark'] .badge-warning {
-  background: rgb(var(--signal-rgb) / 0.24);
-  color: rgb(255 240 219 / 0.98);
+  background: rgb(var(--signal-rgb) / 0.3);
+  color: #7a3c07;
 }
 
 :root[data-theme='dark'] .badge-neutral {
-  background: rgb(var(--tide-rgb) / 0.2);
-  color: rgb(232 244 251 / 0.98);
+  background: rgb(var(--tide-rgb) / 0.26);
+  color: #12354a;
 }
 
 :root[data-theme='dark'] .badge-danger {
   background: rgb(var(--rose-rgb) / 0.22);
-  color: rgb(255 232 232 / 0.98);
+  color: #8f2d2d;
 }
 
 :root[data-theme='dark'] .solid-ink {
@@ -290,13 +290,13 @@ a {
 }
 
 .metric-help-button {
-  border: 1px solid rgb(var(--line-rgb) / 0.16);
-  background: rgb(var(--tide-rgb) / 0.08);
-  color: rgb(var(--tide-rgb) / 0.9);
+  border: 1px solid rgb(var(--line-rgb) / 0.22);
+  background: rgb(var(--tide-rgb) / 0.14);
+  color: rgb(var(--tide-rgb) / 0.98);
 }
 
 .metric-help-button:hover {
-  background: rgb(var(--tide-rgb) / 0.14);
+  background: rgb(var(--tide-rgb) / 0.2);
 }
 
 .panel-card {
@@ -338,6 +338,10 @@ a {
   color: rgb(var(--ink-rgb) / 0.76);
 }
 
+.text-ink\/68 {
+  color: rgb(var(--ink-rgb) / 0.82);
+}
+
 .text-ink\/65 {
   color: rgb(var(--ink-rgb) / 0.8);
 }
@@ -349,7 +353,11 @@ a {
 
 .text-ink\/50,
 .text-ink\/55 {
-  color: rgb(var(--ink-rgb) / 0.66);
+  color: rgb(var(--ink-rgb) / 0.74);
+}
+
+.text-ink\/35 {
+  color: rgb(var(--ink-rgb) / 0.48);
 }
 
 .text-white\/55 {
@@ -360,13 +368,19 @@ a {
   color: rgb(255 255 255 / 0.84);
 }
 
+.text-white\/62,
 .text-white\/65 {
-  color: rgb(255 255 255 / 0.86);
+  color: rgb(255 255 255 / 0.88);
 }
 
 .text-white\/75,
 .text-white\/78 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.text-white\/80,
+.text-white\/82 {
+  color: rgb(255 255 255 / 0.92);
 }
 
 .text-white\/85 {
@@ -381,6 +395,7 @@ a {
 }
 
 :root[data-theme='dark'] .bg-white\/70,
+:root[data-theme='dark'] .bg-white\/72,
 :root[data-theme='dark'] .bg-white\/55 {
   background-color: rgb(var(--panel-muted-rgb) / 0.72) !important;
 }

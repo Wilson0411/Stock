@@ -24,10 +24,10 @@ export default function TradePlanVariantToggle({ value, onChange, className = ''
             key={option.id}
             type="button"
             onClick={() => onChange(option.id)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'solid-ink' : 'bg-foam text-ink/72 hover:bg-white'}`}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${active ? 'solid-ink' : 'bg-foam text-ink/82 hover:bg-white'}`}
           >
             {option.label}
-            <span className={`ml-2 text-xs ${active ? 'text-white/78' : 'text-ink/50'}`}>{option.description}</span>
+            <span className={`ml-2 text-xs ${active ? 'text-current opacity-70' : 'text-ink/62'}`}>{option.description}</span>
           </button>
         );
       })}
