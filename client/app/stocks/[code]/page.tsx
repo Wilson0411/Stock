@@ -1,8 +1,11 @@
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 import BackToDashboardButton from '@/components/back-to-dashboard-button';
 import MetricDisclosure from '@/components/metric-disclosure';
 import StockTradePlanPanel from '@/components/stock-trade-plan-panel';
+import { isAuthenticated } from '@/lib/auth';
 import { getStockDetail } from '@/lib/market';
 
 export const dynamic = 'force-dynamic';
@@ -261,6 +264,10 @@ function eventBiasBadge(bias: '偏空事件段' | '偏多事件段' | '中性等
 }
 
 export default async function StockDetailPage({ params }: { params: { code: string } }) {
+  if (!isAuthenticated(cookies())) {
+    redirect(`/login?next=/stocks/${params.code}`);
+  }
+
   const detail = await getStockDetail(params.code);
 
   if (!detail) {
