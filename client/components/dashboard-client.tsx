@@ -422,11 +422,12 @@ function CandidateCard({
         </div>
 
         <MetricDisclosure
-          className="rounded-2xl bg-[linear-gradient(135deg,#0b1720,#12354a)] px-4 py-3 text-sm text-white/84 shadow-lg"
+          className="rounded-2xl bg-[linear-gradient(135deg,#08131b,#184862)] px-4 py-3 text-sm text-white shadow-lg"
+          contentClassName="border-white/12 pt-3 text-white/90"
           source={homeMetricHelp('trade.riskRewardRatio').source}
           calculation={homeMetricHelp('trade.riskRewardRatio').calculation}
           summary={
-            <p>
+            <p className="text-white/96">
               {plan.preferredSide !== '觀望' ? `${plan.preferredSide}主劇本: ` : ''}
               {plan.summary}
               {plan.riskRewardRatio !== null ? ` 風險報酬比約 ${plan.riskRewardRatio}。` : ''}
