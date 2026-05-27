@@ -218,23 +218,23 @@ a {
 :root[data-theme='dark'] .badge-live,
 :root[data-theme='dark'] .badge-positive {
   background: rgb(var(--mint-rgb) / 0.32);
-  color: #0d5c45;
+  color: rgb(224 255 245 / 0.96);
 }
 
 :root[data-theme='dark'] .badge-batch,
 :root[data-theme='dark'] .badge-warning {
   background: rgb(var(--signal-rgb) / 0.3);
-  color: #7a3c07;
+  color: rgb(255 240 219 / 0.98);
 }
 
 :root[data-theme='dark'] .badge-neutral {
   background: rgb(var(--tide-rgb) / 0.26);
-  color: #12354a;
+  color: rgb(232 244 251 / 0.98);
 }
 
 :root[data-theme='dark'] .badge-danger {
   background: rgb(var(--rose-rgb) / 0.22);
-  color: #8f2d2d;
+  color: rgb(255 232 232 / 0.98);
 }
 
 :root[data-theme='dark'] .solid-ink {
