@@ -799,7 +799,7 @@ export default function DashboardClient({ snapshot }: { snapshot: MarketSnapshot
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-white/65">Taiwan Listed Stock Radar</p>
               <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight md:text-6xl">
-                把首頁切成事件交易模式，優先盯快進處置與已進處置兩個區段。
+                首頁聚焦快進處置與已進處置。
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/78 md:text-lg">
                 第一段優先看快進處置的偏空劇本，第二段再看已進處置後的止跌反彈名單；每檔股票都能再展開到個股頁看事件時間軸。
